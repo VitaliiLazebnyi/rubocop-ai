@@ -51,8 +51,5 @@ jobs:
       uses: rubygems/configure-rubygems-credentials@main
 
     - name: Publish to RubyGems
-      env:
-        # Fallback if OIDC isn't configured on RubyGems.org
-        GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
       run: |
         gem push rubocop-ai-${{ env.VERSION }}.gem
