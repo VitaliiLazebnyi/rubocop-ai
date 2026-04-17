@@ -1,12 +1,6 @@
---dir
-.
---ignore
-vendor/
---ignore
-coverage/
---ignore
-doc/
---ignore
-tmp/
---ignore
-spec/
+--dir .
+--ignore=vendor/
+--ignore=coverage/
+--ignore=doc/
+--ignore=tmp/
+--ignore=spec/

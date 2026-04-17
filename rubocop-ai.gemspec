@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/VitaliiLazebnyi/rubocop-ai'
   spec.license       = 'MIT'
 
-  spec.required_ruby_version = '>= 4.0.2'
+  spec.required_ruby_version = '>= 2.7'
 
   # Security: Code Signing Setup
   spec.cert_chain = ['certs/rubocop-ai-public_cert.pem']
