@@ -2,12 +2,12 @@ plugins:
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
-require:
   - rubocop-thread_safety
+require:
   - rubocop-md
 
 AllCops:
-  TargetRubyVersion: 4.0
+  TargetRubyVersion: 2.7
   NewCops: enable
   SuggestExtensions: false
   Exclude:
@@ -34,3 +34,7 @@ Gemspec/DevelopmentDependencies:
 
 # We need to enforce our own cop internally, but usually RuboCop extensions
 # don't test themselves against their own cops. We can include it manually if needed.
+
+Naming/VariableNumber:
+  Enabled: false
+
