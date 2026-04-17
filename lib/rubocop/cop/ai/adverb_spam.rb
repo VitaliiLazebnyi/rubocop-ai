@@ -42,8 +42,7 @@ module RuboCop
 
             add_offense(comment) do |corrector|
               new_text = text.gsub(pattern, '').rstrip
-              # Ensure the comment still starts with '#' if it got stripped entirely
-              new_text = '#' if new_text.empty?
+
               corrector.replace(comment, new_text)
             end
           end

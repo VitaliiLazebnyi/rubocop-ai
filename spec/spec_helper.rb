@@ -14,8 +14,8 @@ require 'rubocop/rspec/support'
 require 'rubocop-ai'
 require 'sorbet-runtime'
 
-T::Configuration.inline_type_error_handler = lambda { |_, _| }
-T::Configuration.call_validation_error_handler = lambda { |_, _| }
+T::Configuration.inline_type_error_handler = ->(_, _) {}
+T::Configuration.call_validation_error_handler = ->(_, _) {}
 
 RSpec.configure do |config|
   config.include RuboCop::RSpec::ExpectOffense

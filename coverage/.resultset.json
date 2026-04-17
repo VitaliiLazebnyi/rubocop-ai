@@ -1,0 +1,143 @@
+{
+  "RSpec": {
+    "coverage": {
+      "/Users/cm0k/repos_ai/ai-rubocop/lib/rubocop-ai.rb": {
+        "lines": [
+          null,
+          null,
+          null,
+          1,
+          null,
+          1,
+          1,
+          1,
+          1,
+          null,
+          1
+        ],
+        "branches": {}
+      },
+      "/Users/cm0k/repos_ai/ai-rubocop/lib/rubocop/ai.rb": {
+        "lines": [
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          1,
+          null,
+          1,
+          null,
+          1,
+          null,
+          null,
+          null,
+          1,
+          null,
+          2,
+          1,
+          1,
+          null,
+          null,
+          null
+        ],
+        "branches": {}
+      },
+      "/Users/cm0k/repos_ai/ai-rubocop/lib/rubocop/ai/inject.rb": {
+        "lines": [
+          null,
+          null,
+          null,
+          1,
+          1,
+          null,
+          1,
+          1,
+          null,
+          1,
+          1,
+          null,
+          null,
+          null,
+          2,
+          1,
+          1,
+          null,
+          1,
+          1,
+          1,
+          null,
+          null,
+          null,
+          null
+        ],
+        "branches": {}
+      },
+      "/Users/cm0k/repos_ai/ai-rubocop/lib/rubocop/cop/ai/adverb_spam.rb": {
+        "lines": [
+          null,
+          null,
+          null,
+          1,
+          1,
+          null,
+          null,
+          1,
+          null,
+          1,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          1,
+          1,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          2,
+          1,
+          null,
+          null,
+          5,
+          null,
+          5,
+          5,
+          5,
+          null,
+          2,
+          2,
+          null,
+          2,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "branches": {
+          "[:unless, 0, 41, 12, 41, 44]": {
+            "[:else, 1, 41, 12, 41, 44]": 2,
+            "[:then, 2, 41, 12, 41, 16]": 3
+          }
+        }
+      }
+    },
+    "timestamp": 1776451951
+  }
+}

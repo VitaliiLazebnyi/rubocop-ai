@@ -11,9 +11,9 @@ The project leverages [Sorbet](https://sorbet.org/) for robust, static type chec
 - **Strictness**: Code files are expected to utilize `# typed: strong` or `# typed: strict` inline pragmas to ensure comprehensive type safety.
 - **Runtime Testing Exclusions**: Within `spec/spec_helper.rb`, the runtime type error listeners are stubbed out during RSpec execution:
   ```ruby
-  require 'sorbet-runtime'
-  T::Configuration.inline_type_error_handler = lambda { |_, _| }
-  T::Configuration.call_validation_error_handler = lambda { |_, _| }
+require 'sorbet-runtime'
+T::Configuration.inline_type_error_handler = ->(_, _) {}
+T::Configuration.call_validation_error_handler = ->(_, _) {}
   ```
   This guarantees that negative tests asserting behavior with invalid attributes don't crash from Sorbet runtime validations.
 
@@ -21,7 +21,7 @@ The project leverages [Sorbet](https://sorbet.org/) for robust, static type chec
 
 The codebase implements strict coding standards through RuboCop, leveraging several specialized plugins beyond the default rule set.
 
-- **Applied Plugins**: 
+- **Applied Plugins**:
   - `rubocop-performance`
   - `rubocop-thread_safety` (imperative for async/threaded workloads)
   - `rubocop-rake`, `rubocop-rspec`, `rubocop-md` (Markdown linting).
@@ -44,7 +44,7 @@ The codebase implements strict coding standards through RuboCop, leveraging seve
    - Profiling is enabled (`--profile 10`) to identify the top 10 slowest executing tests continuously.
 2. **Coverage mandates (SimpleCov)**:
    - Initialized in `spec_helper.rb`, setting `enable_coverage :branch` mapping all tested code.
-   - **Strict 100% Coverage**: 100% logic and branch test coverage is rigorously mandated. 
+   - **Strict 100% Coverage**: 100% logic and branch test coverage is rigorously mandated.
    - **No Exemptions**: The codebase strictly forbids the use of coverage-dodging exception directives (e.g., `# rubocop:disable`, `# type: ignore`, `# pragma: no cover`) to artificially inflate coverage metrics. All tests must verify real state changes.
 3. **Mocks and Expectations**:
    - `verify_partial_doubles = true` ensures that when mocking an object, it accurately implements the original object's signature preventing "mock drift".
@@ -65,10 +65,10 @@ Cryptographic signing ensures end-to-end security and integrity verification of 
 
 - Inside the `http_loader.gemspec`:
   ```ruby
-  spec.cert_chain  = ['certs/http_loader-public_cert.pem']
-  spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NAME.end_with?('gem') && File.exist?(File.expand_path('~/.gem/gem-private_key.pem'))
+spec.cert_chain = ['certs/http_loader-public_cert.pem']
+spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NAME.end_with?('gem') && File.exist?(File.expand_path('~/.gem/gem-private_key.pem'))
   ```
-- The public certificate is distributed with the repository. 
+- The public certificate is distributed with the repository.
 - The private key is securely stored in CI secrets and dynamically evaluated. It prevents the local `gem build` from failing for developers who do not possess the private key.
 
 ## 6. Continuous Integration & Delivery (GitHub Actions)
@@ -83,7 +83,7 @@ The workflow operates on every push/PR against a matrix. Steps execute sequentia
 6. **Documentation**: Build YARD and run `yard stats --list-undoc`
 7. **Integrity checks**: Validating gem builds locally (`gem build`).
 
-### Automated Secure Releases (`release.yml`) 
+### Automated Secure Releases (`release.yml`)
 Initiated upon semantic version tagging (`v*.*.*`):
 1. **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly from the git tag.
 2. **Key Inject**: Reconstructs `gem-private_key.pem` through GitHub Secrets to sign the release.
@@ -108,5 +108,7 @@ Establishing reproducible development environments relies on explicitly defined 
 1. **Ruby Versioning**: **Always target the latest available Ruby version.** Track the exact Ruby version using a `.ruby-version` file to ensure parity between developer machines and CI contexts. Modern toolchains (like `mise` or `rbenv`) naturally ingest this.
 2. **Dependency Pinning (Gemspec vs. Gemfile)**:
    - For execution contexts and CI runs, strictly commit and lock versions via `Gemfile.lock`.
-   - For standard gem distribution, specify safe version bounds utilizing the pessimistic operator (`~>`) inside the `gemspec`. Do not aggressively over-constrain the gem's dependencies.
-3. **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle encoding failures across distributed platforms.
+   - Maintain all dependencies (runtime and development) strictly within the `gemspec`. The `Gemfile` should only contain `gemspec`.
+   - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
+3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs}/**/*')`) to ensure the gem can be successfully built in environments without a `.git` directory or git executable.
+4. **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle encoding failures across distributed platforms.

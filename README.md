@@ -1,6 +1,6 @@
 # rubocop-ai
 
-`rubocop-ai` is a custom standalone RuboCop extension designed to identify and remediate AI-generated spam and stereotyped code patterns within Ruby codebases. 
+`rubocop-ai` is a custom standalone RuboCop extension designed to identify and remediate AI-generated spam and stereotyped code patterns within Ruby codebases.
 It strictly enforces type-safety via Sorbet, mandates 100% test coverage, and provides zero-tolerance code scanning.
 
 ## Installation

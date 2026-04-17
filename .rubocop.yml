@@ -1,7 +1,8 @@
-require:
+plugins:
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
+require:
   - rubocop-thread_safety
   - rubocop-md
 
@@ -21,6 +22,28 @@ RSpec/Dialect:
   Enabled: false
 
 RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Max: 15
+
+Naming/VariableNumber:
+  Exclude:
+    - 'spec/**/*'
+
+Layout/LineLength:
+  Max: 165
+
+Naming/FileName:
+  Exclude:
+    - 'lib/rubocop-ai.rb'
+    - '**/*.md'
+
+ThreadSafety/DirChdir:
+  Exclude:
+    - 'rubocop-ai.gemspec'
+
+Gemspec/DevelopmentDependencies:
   Enabled: false
 
 # We need to enforce our own cop internally, but usually RuboCop extensions

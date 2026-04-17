@@ -9,10 +9,11 @@ module RuboCop
   module AI
     # Error boundary for AI cops
     class Error < StandardError; end
-    
+
     # Project root finder
     # @return [String]
     extend T::Sig
+
     sig { returns(String) }
     def self.project_root
       T.let(File.join(__dir__ || '', '..', '..'), String)

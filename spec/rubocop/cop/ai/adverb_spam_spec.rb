@@ -3,13 +3,13 @@
 
 require 'spec_helper'
 
-RSpec.describe RuboCop::Cop::AI::AdverbSpam, :config, req_RB_AI_001: true, req_RB_AI_003: true do
+RSpec.describe RuboCop::Cop::AI::AdverbSpam, :config, :req_RB_AI_001, :req_RB_AI_003 do
   let(:config) { RuboCop::Config.new }
 
   it 'registers an offense and auto-corrects an AI spam comment' do
     expect_offense(<<~RUBY)
       # @param c_m [String] securely accurately dynamically visually intuitively
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AI/AdverbSpam: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
       def foo; end
     RUBY
 
@@ -29,7 +29,7 @@ RSpec.describe RuboCop::Cop::AI::AdverbSpam, :config, req_RB_AI_001: true, req_R
   it 'reduces to just a hash if all words are removed' do
     expect_offense(<<~RUBY)
       # securely accurately
-      ^^^^^^^^^^^^^^^^^^^^^ Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
+      ^^^^^^^^^^^^^^^^^^^^^ AI/AdverbSpam: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
       def blank; end
     RUBY
 
