@@ -32,6 +32,17 @@ The codebase implements strict coding standards through RuboCop, leveraging seve
   AI/AdverbSpam:
     Enabled: true
   ```
+- **Custom Plugin Configuration Injection**: When a RuboCop extension must programmatically enforce a core layer of configurable defaults, inject it safely using `RuboCop::ConfigLoader`. Remember that merging two `RuboCop::Config` instances natively strips the enclosing class and evaluates to a primitive `Hash`, which crashes subsequent RuboCop initializations (e.g., `undefined method 'for_all_cops' for an instance of Hash`). Always explicitly re-wrap the response:
+  ```ruby
+  path = File.join(RuboCop::AI.project_root, 'config', 'default.yml')
+  hash = T.cast(RuboCop::ConfigLoader.send(:load_yaml_configuration, path), T::Hash[T.untyped, T.untyped])
+  config = RuboCop::Config.new(hash, path)
+  config.make_excludes_absolute
+  
+  merged_hash = RuboCop::ConfigLoader.default_configuration.merge(config)
+  merged_config = RuboCop::Config.new(merged_hash, RuboCop::ConfigLoader.default_configuration.loaded_path)
+  RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, merged_config)
+  ```
 - **Constraints enforced**:
   - `Style/FrozenStringLiteralComment: Enabled: true` (for memory footprint optimization).
   - Target Ruby execution contexts are explicitly defined.
@@ -58,7 +69,7 @@ YARD heavily drives code discoverability and API usability.
   - Configures the output format as markdown (`--markup markdown`).
   - Instructs YARD to utilize the `sorbet` plugin (`--plugin sorbet`) so Sorbet signatures are automatically ingested into documentation metadata.
 - **Enforcement**:
-  - Utilizing `yard stats --list-undoc` inside GitHub CI workflows ensures the release blocks if any public class, module, or method lacks inline documentation.
+  - Utilizing `yard stats --list-undoc` inside GitHub CI workflows to monitor documentation coverage. Because `yard stats` defaults to exit code `0` regardless of missing docs, CI pipelines **must explicitly parse the output** (e.g., `grep -q "100.00% documented"`) to strictly fail the build and block the release if any public class, module, or method lacks inline documentation.
 
 ## 5. Security: Gem Code Signing and Certificates
 
@@ -82,7 +93,7 @@ The workflow operates on every push/PR against a matrix. To maximize bandwidth a
 4. **Linting**: `bundle exec rubocop`
 5. **Testing**: `bundle exec rspec`
 6. **Typing**: `bundle exec srb tc --typed strong`
-7. **Documentation**: Build YARD and run `yard stats --list-undoc`
+7. **Documentation**: Build YARD and run `yard stats --list-undoc`, ensuring the pipeline explicitly checks the output for `100.00% documented` to securely fail on missing documentation.
 8. **Integrity checks**: Validating gem builds locally (`gem build`).
 
 ### Automated Secure Releases (`release.yml`)
@@ -112,7 +123,8 @@ Establishing reproducible development environments relies on explicitly defined 
    - For reusable generic libraries (gems), do NOT commit `Gemfile.lock` to version control. This ensures CI pipelines resolve the appropriate, environment-compatible dependencies during multi-version matrix tests.
    - Maintain all dependencies (runtime and development) strictly within the `gemspec`. The `Gemfile` should only contain `gemspec`.
    - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
-3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs}/**/*')`) to ensure the gem can be successfully built in environments without a `.git` directory or git executable.
+3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs,config}/**/*')`) to ensure the gem can be successfully built in environments without a `.git` directory or git executable.
+   - **Configuration Exposure Requirement**: If the gem is a plugin or actively distributes configuration defaults (e.g., RuboCop extensions needing `config/default.yml`), it is critical to explicitly append `config` (or the relative metadata directory) to the `Dir.glob` definition. Failure to do so will compile a valid-looking package that silently omits critical configuration structures, leading to file-not-found exceptions upon production install.
 4. **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle encoding failures across distributed platforms.
 5. **Version Control Ignore Policies (`.gitignore`)**: Safely partition exclusion files utilizing explicitly commented boundary sections: OS / Editor artifacts, Ruby / Bundler extractions (`*.gem`, `vendor/`), Logs and Output, Coverage caches, YARD document generation caches (`.yardoc/`), and general transient formats (e.g. `*.json`). Conform to these categories rigidly to maintain repository cleanliness.
 

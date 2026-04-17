@@ -19,7 +19,9 @@ module RuboCop
         hash = T.cast(RuboCop::ConfigLoader.send(:load_yaml_configuration, path), T::Hash[T.untyped, T.untyped])
         config = RuboCop::Config.new(hash, path)
         config.make_excludes_absolute
-        RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, RuboCop::ConfigLoader.default_configuration.merge(config))
+        merged = RuboCop::ConfigLoader.default_configuration.merge(config)
+        merged_config = RuboCop::Config.new(merged, RuboCop::ConfigLoader.default_configuration.loaded_path)
+        RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, merged_config)
       end
     end
   end

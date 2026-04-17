@@ -69,7 +69,13 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
     - name: Ensure Complete Documentation
-      run: bundle exec yard stats --list-undoc
+      run: |
+        OUTPUT=$(bundle exec yard stats --list-undoc)
+        echo "$OUTPUT"
+        if ! echo "$OUTPUT" | grep -q "100.00% documented"; then
+          echo "::error::Documentation coverage is less than 100%. Missing YARD docs detected."
+          exit 1
+        fi
 
   build:
     runs-on: ubuntu-latest
