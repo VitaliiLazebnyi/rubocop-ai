@@ -1,4 +1,4 @@
---dir .
+.
 --ignore=vendor/
 --ignore=coverage/
 --ignore=doc/
