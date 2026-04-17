@@ -1,0 +1,27 @@
+require:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+  - rubocop-thread_safety
+  - rubocop-md
+
+AllCops:
+  TargetRubyVersion: 4.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'sorbet/**/*'
+    - 'tmp/**/*'
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+RSpec/Dialect:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+# We need to enforce our own cop internally, but usually RuboCop extensions
+# don't test themselves against their own cops. We can include it manually if needed.

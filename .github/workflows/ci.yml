@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["4.0"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+        
+    - name: Run RuboCop
+      run: bundle exec rubocop
+      
+    - name: Run Tests
+      run: bundle exec rspec
+      
+    - name: Run Sorbet Typechecker
+      run: bundle exec srb tc --typed strong
+      
+    - name: Ensure Complete Documentation
+      run: bundle exec yard stats --list-undoc
+      
+    - name: Verify Gem Build
+      run: gem build rubocop-ai.gemspec
