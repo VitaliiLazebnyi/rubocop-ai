@@ -76,13 +76,14 @@ spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NA
 
 ### CI Verification Pipeline (`ci.yml`)
 The workflow operates on every push/PR against a matrix. To maximize bandwidth and minimize feedback loops, verification checks must be partitioned into independent parallel jobs (e.g., `lint`, `test`, `typecheck`, `docs`, `build`) rather than chaining them sequentially:
-1. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`).
-2. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
-3. **Linting**: `bundle exec rubocop`
-4. **Testing**: `bundle exec rspec`
-5. **Typing**: `bundle exec srb tc --typed strong`
-6. **Documentation**: Build YARD and run `yard stats --list-undoc`
-7. **Integrity checks**: Validating gem builds locally (`gem build`).
+1. **Target Matrix Execution**: Code execution paths (`test` and `typecheck`) must be tested against a full matrix of officially supported Ruby versions (e.g., `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility. Conversely, static checks (`lint`, `docs`, `build`) should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute bandwidth.
+2. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`).
+3. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
+4. **Linting**: `bundle exec rubocop`
+5. **Testing**: `bundle exec rspec`
+6. **Typing**: `bundle exec srb tc --typed strong`
+7. **Documentation**: Build YARD and run `yard stats --list-undoc`
+8. **Integrity checks**: Validating gem builds locally (`gem build`).
 
 ### Automated Secure Releases (`release.yml`)
 Initiated upon semantic version tagging (`v*.*.*`):

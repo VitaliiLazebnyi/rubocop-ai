@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["2.7", "3.3", "4.0"]
+        ruby: ["4.0"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["2.7", "3.3", "4.0"]
+        ruby: ["2.7", "3.2", "3.3", "4.0"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["2.7", "3.3", "4.0"]
+        ruby: ["2.7", "3.2", "3.3", "4.0"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["2.7", "3.3", "4.0"]
+        ruby: ["4.0"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
@@ -76,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["2.7", "3.3", "4.0"]
+        ruby: ["4.0"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
