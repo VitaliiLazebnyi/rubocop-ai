@@ -11,6 +11,8 @@ end
 
 module RuboCop
   module AST
+    class Node; end
+
     class ProcessedSource
       sig { returns(T::Array[Parser::Source::Comment]) }
       def comments; end
@@ -35,7 +37,7 @@ module RuboCop
 
   class Config
     # We do NOT redefine tap here; Sorbet knows what tap is.
-    sig { params(hash: Hash, base_dir_or_uri: String).void }
+    sig { params(hash: T::Hash[T.untyped, T.untyped], base_dir_or_uri: String).void }
     def initialize(hash = {}, base_dir_or_uri = T.unsafe(nil)); end
 
     sig { returns(T.self_type) }
@@ -52,7 +54,7 @@ module RuboCop
     sig { returns(RuboCop::Config) }
     def self.default_configuration; end
 
-    sig { params(path: String).returns(Hash) }
+    sig { params(path: String).returns(T::Hash[T.untyped, T.untyped]) }
     def self.load_yaml_configuration(path); end
   end
 end
