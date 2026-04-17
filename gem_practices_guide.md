@@ -87,6 +87,36 @@ spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NA
 
 ### CI Verification Pipeline (`ci.yml`)
 The workflow operates on every push/PR against a matrix. To maximize bandwidth and minimize feedback loops, verification checks must be partitioned into independent parallel jobs (e.g., `lint`, `test`, `typecheck`, `docs`, `build`) rather than chaining them sequentially:
+
+**Blueprint / Reference for AI Agents:**
+```yaml
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # Suppress Node 20 deprecation warnings
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["2.7", "3.2", "3.3", "4.0"] # Full runtime matrix
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+    - run: bundle exec rspec
+
+  # Repeat the above structure for `lint`, `typecheck`, `docs`, `build` 
+  # pinned to the highest Ruby version (e.g. ruby: ["4.0"])
+```
 1. **Target Matrix Execution**: Runtime execution paths (specifically `test`, which exercises runtime logic including `sorbet-runtime`) must be tested against a full matrix of officially supported Ruby versions (e.g., `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility across environments. Conversely, static checks and builds (`lint`, `typecheck`, `docs`, `build`) are environment-independent. Static typecheckers (`srb tc`) parse the syntax tree deterministically without relying on the underlying Ruby runtime. Thus, these static checks should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute bandwidth.
 2. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`). Actions MUST run natively on Node 24 (or newer) to prevent GitHub runner deprecation warnings caused by legacy environments (e.g., Node 20).
 3. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
@@ -97,7 +127,59 @@ The workflow operates on every push/PR against a matrix. To maximize bandwidth a
 8. **Integrity checks**: Validating gem builds locally (`gem build`).
 
 ### Automated Secure Releases (`release.yml`)
-Initiated upon semantic version tagging (`v*.*.*`):
+Initiated upon semantic version tagging (`v*.*.*`).
+
+**Blueprint / Reference for AI Agents:**
+```yaml
+name: Automated Release
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # Required for OIDC Trusted Publishing
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 4.0
+        bundler-cache: true
+    
+    # 1. Safely inject multiline cryptographic key via `env` and `printf`
+    - name: Recover Private Key
+      env:
+        GEM_PRIVATE_KEY: ${{ secrets.GEM_PRIVATE_KEY }}
+      run: |
+        mkdir -p ~/.gem
+        printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem
+        chmod 0600 ~/.gem/gem-private_key.pem
+        
+    # 2. Extract Tag and sync codebase
+    - run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    - run: sed -i "s/T.let('.*', String)/T.let('${{ env.VERSION }}', String)/" lib/rubocop/ai/version.rb
+        
+    # 3. Manually build to avoid rake constraints
+    - run: gem build rubocop-ai.gemspec
+      
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: rubocop-ai-${{ env.VERSION }}.gem
+        
+    # 4. Generate short-lived OIDC Token
+    - uses: rubygems/configure-rubygems-credentials@main
+
+    # 5. Push compiled artifact bypassing dirty working tree failures
+    - run: gem push rubocop-ai-${{ env.VERSION }}.gem
+```
 1. **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly from the git tag. Because this alters the git working tree, it explicitly breaks tools that require a "clean" repository (such as `rake release`).
 2. **Key Inject**: Reconstructs the code-signing private key `gem-private_key.pem` through GitHub Secrets. **Crucially**, multi-line certificates MUST be injected via environment variables (`env: GEM_PRIVATE_KEY`) and written via `printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem`. Using standard `echo` interpolations will flatten line breaks, corrupting the key and causing `OpenSSL::PKey::PKeyError`.
 3. **Release deployment**: Pushes the manually compiled `.gem` artifact to GitHub Releases.
