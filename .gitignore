@@ -8,6 +8,7 @@
 .gem/
 gems_unpacked/
 vendor/
+Gemfile.lock
 
 # Logs and Output
 *.log

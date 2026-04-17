@@ -109,7 +109,7 @@ Establishing reproducible development environments relies on explicitly defined 
 
 1. **Ruby Versioning**: **Always target the latest available Ruby version.** Track the exact Ruby version using a `.ruby-version` file to ensure parity between developer machines and CI contexts. Modern toolchains (like `mise` or `rbenv`) naturally ingest this.
 2. **Dependency Pinning (Gemspec vs. Gemfile)**:
-   - For execution contexts and CI runs, strictly commit and lock versions via `Gemfile.lock`.
+   - For reusable generic libraries (gems), do NOT commit `Gemfile.lock` to version control. This ensures CI pipelines resolve the appropriate, environment-compatible dependencies during multi-version matrix tests.
    - Maintain all dependencies (runtime and development) strictly within the `gemspec`. The `Gemfile` should only contain `gemspec`.
    - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
 3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs}/**/*')`) to ensure the gem can be successfully built in environments without a `.git` directory or git executable.
