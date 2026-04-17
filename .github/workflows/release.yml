@@ -47,8 +47,12 @@ jobs:
       with:
         files: rubocop-ai-${{ env.VERSION }}.gem
         
+    - name: Configure RubyGems Credentials (OIDC)
+      uses: rubygems/configure-rubygems-credentials@main
+
     - name: Publish to RubyGems
-      uses: rubygems/release-gem@v1
-      with:
-        gem-name: rubocop-ai
-        version: ${{ env.VERSION }}
+      env:
+        # Fallback if OIDC isn't configured on RubyGems.org
+        GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+      run: |
+        gem push rubocop-ai-${{ env.VERSION }}.gem
