@@ -18,18 +18,8 @@ AllCops:
 Style/FrozenStringLiteralComment:
   Enabled: true
 
-RSpec/Dialect:
-  Enabled: false
-
-RSpec/MultipleMemoizedHelpers:
-  Enabled: false
-
 RSpec/ExampleLength:
   Max: 15
-
-Naming/VariableNumber:
-  Exclude:
-    - 'spec/**/*'
 
 Layout/LineLength:
   Max: 165
@@ -39,12 +29,8 @@ Naming/FileName:
     - 'lib/rubocop-ai.rb'
     - '**/*.md'
 
-ThreadSafety/DirChdir:
-  Exclude:
-    - 'rubocop-ai.gemspec'
-
 Gemspec/DevelopmentDependencies:
-  Enabled: false
+  EnforcedStyle: gemspec
 
 # We need to enforce our own cop internally, but usually RuboCop extensions
 # don't test themselves against their own cops. We can include it manually if needed.

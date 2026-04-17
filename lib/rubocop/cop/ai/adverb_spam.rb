@@ -27,21 +27,22 @@ module RuboCop
         # Detailed explanation of what the cop expects to find and correct when triggered.
         MSG = T.let('Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).', String)
 
+        # Pattern to match sequences of 2 or more words ending in 'ly'
+        # including optional spaces and punctuation in between (but NOT newlines).
+        SPAM_PATTERN = T.let(/(?:[ \t]*\b[a-zA-Z]+ly\b[ \t,.]*){2,}/i, Regexp)
+
         # Triggered for each new file/investigation to scan comments for invalid documentation spam.
         #
         # @return [void]
         sig { void }
         def on_new_investigation
-          # Pattern to match sequences of 2 or more words ending in 'ly'
-          # including optional spaces and punctuation in between (but NOT newlines).
-          pattern = T.let(/(?:[ \t]*\b[a-zA-Z]+ly\b[ \t,.]*){2,}/i, Regexp)
-
           processed_source.comments.each do |comment|
             text = comment.text
-            next unless text.match?(pattern)
+            next unless text.match?(SPAM_PATTERN)
 
             add_offense(comment) do |corrector|
-              new_text = text.gsub(pattern, '').rstrip
+              new_text = text.gsub(SPAM_PATTERN, '').rstrip
+              new_text = '#' if new_text.empty?
 
               corrector.replace(comment, new_text)
             end

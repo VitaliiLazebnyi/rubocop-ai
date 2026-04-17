@@ -1,0 +1,28 @@
+# OS / Editor
+.DS_Store
+*~
+*.swp
+
+# Ruby / Bundler
+*.gem
+.gem/
+gems_unpacked/
+vendor/
+
+# Logs and Output
+*.log
+*.out
+*.pid
+logs/
+rspec_output.txt
+errors.txt
+
+# Coverage
+coverage/
+
+# YARD Documentation
+.yardoc/
+doc/
+
+# Misc
+*.json

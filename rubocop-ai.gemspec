@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Vitalii Lazebnyi']
   spec.email         = ['vitalii.lazebnyi.github@gmail.com']
 
-  spec.summary       = 'RuboCop extensions for AI-generated code detection.'
+  spec.summary       = 'RuboCop extensions for broken AI-generated comments detection.'
   spec.description   = 'A RuboCop extension aimed at detecting and remediating boilerplate, spam, or AI-hallucinated artifacts across codebases.'
-  spec.homepage      = 'https://github.com/example/rubocop-ai'
+  spec.homepage      = 'https://github.com/VitaliiLazebnyi/rubocop-ai'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = '>= 4.0.2'
@@ -24,9 +24,7 @@ Gem::Specification.new do |spec|
   spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir.glob('{exe,lib,certs}/**/*') + %w[README.md rubocop-ai.gemspec]
-  end
+  spec.files = Dir.glob('{exe,lib,certs}/**/*') + %w[README.md rubocop-ai.gemspec]
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']

@@ -36,6 +36,7 @@ The codebase implements strict coding standards through RuboCop, leveraging seve
   - `Style/FrozenStringLiteralComment: Enabled: true` (for memory footprint optimization).
   - Target Ruby execution contexts are explicitly defined.
   - **No Inline Exceptions**: The codebase strictly forbids the use of inline RuboCop disable directives (e.g., `# rubocop:disable All`). RuboCop offenses must be actively resolved via architectural refactoring rather than silenced.
+  - **Minimal Configuration Exceptions**: Usage of exceptions within `.rubocop.yml` must be strictly minimized. Exceptions should only be added if they are absolutely inevitable (e.g., overriding `Naming/FileName` for gem entry files). For rule adjustments, utilize supported configuration parameters (e.g., `EnforcedStyle: gemspec` for `Gemspec/DevelopmentDependencies`) rather than silencing cops.
 
 ## 3. RSpec Testing Suite
 
@@ -112,3 +113,10 @@ Establishing reproducible development environments relies on explicitly defined 
    - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
 3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs}/**/*')`) to ensure the gem can be successfully built in environments without a `.git` directory or git executable.
 4. **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle encoding failures across distributed platforms.
+5. **Version Control Ignore Policies (`.gitignore`)**: Safely partition exclusion files utilizing explicitly commented boundary sections: OS / Editor artifacts, Ruby / Bundler extractions (`*.gem`, `vendor/`), Logs and Output, Coverage caches, YARD document generation caches (`.yardoc/`), and general transient formats (e.g. `*.json`). Conform to these categories rigidly to maintain repository cleanliness.
+
+## 9. Gem Metadata Standards
+
+Consistent metadata helps standardize open-source publication and internal tracking.
+
+1. **Homepage Template**: Set the `spec.homepage` strictly utilizing the HTTPS standard GitHub web URI format: `https://github.com/VitaliiLazebnyi/<gem name>`.
