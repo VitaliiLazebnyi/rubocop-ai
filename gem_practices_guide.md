@@ -133,3 +133,4 @@ Establishing reproducible development environments relies on explicitly defined 
 Consistent metadata helps standardize open-source publication and internal tracking.
 
 1. **Homepage Template**: Set the `spec.homepage` strictly utilizing the HTTPS standard GitHub web URI format: `https://github.com/VitaliiLazebnyi/<gem name>`.
+2. **Minimize Metadata Link Duplication**: Do NOT duplicate the `spec.homepage` value into `spec.metadata['homepage_uri']`. RubyGems versions emit warnings when there are multiple metadata fields (like `homepage_uri` and `source_code_uri`) assigning the exact same URI, as it will deduplicate them visually on rubygems.org. Standard practice is to provide `spec.homepage` inherently, set `spec.metadata['source_code_uri'] = spec.homepage` to explicitly activate the source code link, and omit `homepage_uri` from the metadata hash.

@@ -19,12 +19,11 @@ Gem::Specification.new do |spec|
   spec.cert_chain = ['certs/rubocop-ai-public_cert.pem']
   spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NAME.end_with?('gem') && File.exist?(File.expand_path('~/.gem/gem-private_key.pem'))
 
-  spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir.glob('{exe,lib,certs,config}/**/*') + %w[README.md rubocop-ai.gemspec]
+  spec.files = Dir.glob('{exe,lib,certs,config}/**/*') + %w[README.md LICENSE.txt rubocop-ai.gemspec]
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
