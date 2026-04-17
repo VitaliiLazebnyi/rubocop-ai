@@ -34,14 +34,14 @@ The codebase implements strict coding standards through RuboCop, leveraging seve
   ```
 - **Custom Plugin Configuration Injection**: When a RuboCop extension must programmatically enforce a core layer of configurable defaults, inject it safely using `RuboCop::ConfigLoader`. Remember that merging two `RuboCop::Config` instances natively strips the enclosing class and evaluates to a primitive `Hash`, which crashes subsequent RuboCop initializations (e.g., `undefined method 'for_all_cops' for an instance of Hash`). Always explicitly re-wrap the response:
   ```ruby
-  path = File.join(RuboCop::AI.project_root, 'config', 'default.yml')
-  hash = T.cast(RuboCop::ConfigLoader.send(:load_yaml_configuration, path), T::Hash[T.untyped, T.untyped])
-  config = RuboCop::Config.new(hash, path)
-  config.make_excludes_absolute
-  
-  merged_hash = RuboCop::ConfigLoader.default_configuration.merge(config)
-  merged_config = RuboCop::Config.new(merged_hash, RuboCop::ConfigLoader.default_configuration.loaded_path)
-  RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, merged_config)
+path = File.join(RuboCop::AI.project_root, 'config', 'default.yml')
+hash = T.cast(RuboCop::ConfigLoader.send(:load_yaml_configuration, path), T::Hash[T.untyped, T.untyped])
+config = RuboCop::Config.new(hash, path)
+config.make_excludes_absolute
+
+merged = RuboCop::ConfigLoader.default_configuration.merge(config)
+merged_config = RuboCop::Config.new(merged.to_h, RuboCop::ConfigLoader.default_configuration.loaded_path)
+RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, merged_config)
   ```
 - **Constraints enforced**:
   - `Style/FrozenStringLiteralComment: Enabled: true` (for memory footprint optimization).

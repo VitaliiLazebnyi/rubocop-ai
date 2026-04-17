@@ -48,6 +48,9 @@ module RuboCop
 
     sig { returns(T::Hash[String, T.untyped]) }
     def to_h; end
+
+    sig { returns(String) }
+    def loaded_path; end
   end
 
   class ConfigLoader

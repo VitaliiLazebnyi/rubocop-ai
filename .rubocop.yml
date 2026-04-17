@@ -38,3 +38,5 @@ Gemspec/DevelopmentDependencies:
 Naming/VariableNumber:
   Enabled: false
 
+Layout/TrailingEmptyLines:
+  Enabled: true
