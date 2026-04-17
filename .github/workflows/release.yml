@@ -24,9 +24,11 @@ jobs:
         bundler-cache: true
         
     - name: Recover Private Key for Code Signing
+      env:
+        GEM_PRIVATE_KEY: ${{ secrets.GEM_PRIVATE_KEY }}
       run: |
         mkdir -p ~/.gem
-        echo "${{ secrets.GEM_PRIVATE_KEY }}" > ~/.gem/gem-private_key.pem
+        printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem
         chmod 0600 ~/.gem/gem-private_key.pem
         
     - name: Extract Release Version
