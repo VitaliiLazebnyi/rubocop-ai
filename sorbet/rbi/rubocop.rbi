@@ -1,22 +1,58 @@
 # typed: true
 
-module RuboCop
-  class ConfigLoader
-    def self.send(*args); end
-    def self.default_configuration; end
-    def self.instance_variable_set(*args); end
+module Parser
+  module Source
+    class Comment
+      sig { returns(String) }
+      def text; end
+    end
   end
+end
 
-  class Config
-    def self.new(*args); end
-    def tap; end
+module RuboCop
+  module AST
+    class ProcessedSource
+      sig { returns(T::Array[Parser::Source::Comment]) }
+      def comments; end
+    end
   end
 
   module Cop
+    class Corrector
+      sig { params(node_or_range: T.any(Parser::Source::Comment, RuboCop::AST::Node), replacement: String).void }
+      def replace(node_or_range, replacement); end
+    end
+
     class Base
+      sig { returns(RuboCop::AST::ProcessedSource) }
       def processed_source; end
-      def add_offense(node, &block); end
+
+      sig { params(node: Parser::Source::Comment, yield_block: T.nilable(T.proc.params(corrector: RuboCop::Cop::Corrector).void)).void }
+      def add_offense(node, &yield_block); end
     end
     module AutoCorrector; end
+  end
+
+  class Config
+    # We do NOT redefine tap here; Sorbet knows what tap is.
+    sig { params(hash: Hash, base_dir_or_uri: String).void }
+    def initialize(hash = {}, base_dir_or_uri = T.unsafe(nil)); end
+
+    sig { returns(T.self_type) }
+    def make_excludes_absolute; end
+
+    sig { params(other: RuboCop::Config).returns(RuboCop::Config) }
+    def merge(other); end
+
+    sig { returns(T::Hash[String, T.untyped]) }
+    def to_h; end
+  end
+
+  class ConfigLoader
+    sig { returns(RuboCop::Config) }
+    def self.default_configuration; end
+
+    sig { params(path: String).returns(Hash) }
+    def self.load_yaml_configuration(path); end
   end
 end

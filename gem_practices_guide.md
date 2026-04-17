@@ -81,7 +81,7 @@ The workflow operates on every push/PR against a matrix. To maximize bandwidth a
 3. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
 4. **Linting**: `bundle exec rubocop`
 5. **Testing**: `bundle exec rspec`
-6. **Typing**: `bundle exec srb tc`
+6. **Typing**: `bundle exec srb tc --typed strong`
 7. **Documentation**: Build YARD and run `yard stats --list-undoc`
 8. **Integrity checks**: Validating gem builds locally (`gem build`).
 

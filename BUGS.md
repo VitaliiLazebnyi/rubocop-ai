@@ -6,7 +6,7 @@ This document logs active or notable defects mapped explicitly to their requirem
 
 - **BUG-CI-003**: Sorbet throws `Call to method X on T.untyped` for RuboCop dependencies when using `--typed strong`.
   - **Violation**: The command-line `--typed strong` override breaks compilation by demanding strongly-typed responses from internal core components (e.g. `processed_source`) across `adverb_spam.rb` and `inject.rb` where generated APIs are currently untyped by Tapioca.
-  - **Expected Behavioral Delta**: Removing `--typed strong` from the CI command and standardizing on the inline `# typed: strict` declarations allows Sorbet to strictly enforce signatures on existing local types without fatally blocking on external untyped code paths.
+  - **Expected Behavioral Delta**: Providing a custom static RBI definition file (`sorbet/rbi/rubocop.rbi`) that supplies fully realized type signatures for `Parser::Source::Comment`, `RuboCop::AST::ProcessedSource`, and related RuboCop configuration internals. Adding explicit `T.cast` for reflective calls (e.g. `send`) provides absolute strict typing without compromising the `--typed strong` standard.
 
 - **BUG-CI-002**: Sorbet Typechecker CI step failing with `Argument ‘--dir .’ starts with a - but has incorrect syntax.`
   - **Violation**: The requirement to strictly statically type check the repository with Sorbet (via `srb tc`) cannot be satisfied due to invalid CLI argument formatting injected by `sorbet/config`.
