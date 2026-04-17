@@ -98,10 +98,10 @@ The workflow operates on every push/PR against a matrix. To maximize bandwidth a
 
 ### Automated Secure Releases (`release.yml`)
 Initiated upon semantic version tagging (`v*.*.*`):
-1. **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly from the git tag.
-2. **Key Inject**: Reconstructs `gem-private_key.pem` through GitHub Secrets to sign the release.
-3. **Release deployment**: Pushes to GitHub Releases (creating assets like `.gem`).
-4. **Registry Push**: Distributes directly to `--push_host` RubyGems securely via GitHub OIDC publishing actions, circumventing standard OTP complications.
+1. **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly from the git tag. Because this alters the git working tree, it explicitly breaks tools that require a "clean" repository (such as `rake release`).
+2. **Key Inject**: Reconstructs the code-signing private key `gem-private_key.pem` through GitHub Secrets. **Crucially**, multi-line certificates MUST be injected via environment variables (`env: GEM_PRIVATE_KEY`) and written via `printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem`. Using standard `echo` interpolations will flatten line breaks, corrupting the key and causing `OpenSSL::PKey::PKeyError`.
+3. **Release deployment**: Pushes the manually compiled `.gem` artifact to GitHub Releases.
+4. **Registry Push (RubyGems)**: Avoid high-level wrapper actions (like `rubygems/release-gem`) which implicitly enforce `bundle exec rake release` standards (requiring an explicit `Rakefile` and a perfectly clean git tree). Instead, leverage `rubygems/configure-rubygems-credentials` to securely initialize OIDC Trusted Publishing (or fallback to `RUBYGEMS_API_KEY` secret), then execute a direct `gem push` on the built artifact. Note: if it's the very first time publishing the gem, a "Pending Trusted Publisher" MUST be created on RubyGems.org beforehand, as `GEM_PRIVATE_KEY` is only for local signing and provides zero network authorization.
 
 ## 7. Reliability & Architecture Guidelines (Best Practices)
 
