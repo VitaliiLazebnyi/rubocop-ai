@@ -75,7 +75,7 @@ spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NA
 ## 6. Continuous Integration & Delivery (GitHub Actions)
 
 ### CI Verification Pipeline (`ci.yml`)
-The workflow operates on every push/PR against a matrix. Steps execute sequentially blocking failures:
+The workflow operates on every push/PR against a matrix. To maximize bandwidth and minimize feedback loops, verification checks must be partitioned into independent parallel jobs (e.g., `lint`, `test`, `typecheck`, `docs`, `build`) rather than chaining them sequentially:
 1. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`).
 2. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
 3. **Linting**: `bundle exec rubocop`
