@@ -77,7 +77,7 @@ spec.signing_key = File.expand_path('~/.gem/gem-private_key.pem') if $PROGRAM_NA
 ### CI Verification Pipeline (`ci.yml`)
 The workflow operates on every push/PR against a matrix. To maximize bandwidth and minimize feedback loops, verification checks must be partitioned into independent parallel jobs (e.g., `lint`, `test`, `typecheck`, `docs`, `build`) rather than chaining them sequentially:
 1. **Target Matrix Execution**: Runtime execution paths (specifically `test`, which exercises runtime logic including `sorbet-runtime`) must be tested against a full matrix of officially supported Ruby versions (e.g., `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility across environments. Conversely, static checks and builds (`lint`, `typecheck`, `docs`, `build`) are environment-independent. Static typecheckers (`srb tc`) parse the syntax tree deterministically without relying on the underlying Ruby runtime. Thus, these static checks should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute bandwidth.
-2. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`).
+2. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g., `actions/checkout@v6`, `ruby/setup-ruby@v1`). Actions MUST run natively on Node 24 (or newer) to prevent GitHub runner deprecation warnings caused by legacy environments (e.g., Node 20).
 3. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
 4. **Linting**: `bundle exec rubocop`
 5. **Testing**: `bundle exec rspec`
