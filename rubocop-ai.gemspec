@@ -41,6 +41,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop-rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop-thread_safety', '~> 0.5'
   spec.add_development_dependency 'simplecov', '~> 0.22'
+  spec.add_development_dependency 'simplecov-ai', '~> 0.10'
   spec.add_development_dependency 'sorbet', '>= 0.5'
   spec.add_development_dependency 'tapioca', '>= 0.11'
   spec.add_development_dependency 'yard', '>= 0.9'

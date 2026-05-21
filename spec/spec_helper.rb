@@ -1,12 +1,35 @@
 # frozen_string_literal: true
 
+# Suppress the warning from parser gem when running on newer Ruby versions (e.g. Ruby 4.0+)
+# where parser/current loads an older Ruby parser.
+module Warning
+  class << self
+    unless respond_to?(:orig_warn)
+      alias_method :orig_warn, :warn
+      def warn(msg, category: nil)
+        if msg.start_with?('warning: parser/current is loading')
+          # Silence this warning
+        else
+          orig_warn(msg, category: category)
+        end
+      end
+    end
+  end
+end
+
 require 'simplecov'
+require 'simplecov-ai'
 
 SimpleCov.start do
   enable_coverage :branch
   minimum_coverage line: 100, branch: 100
   add_filter '/spec/'
   add_filter '/vendor/'
+
+  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+                                                                    SimpleCov::Formatter::HTMLFormatter,
+                                                                    SimpleCov::Formatter::AIFormatter
+                                                                  ])
 end
 
 require 'rubocop'
