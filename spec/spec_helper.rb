@@ -5,12 +5,14 @@
 module Warning
   class << self
     unless respond_to?(:orig_warn)
-      alias_method :orig_warn, :warn
-      def warn(msg, category: nil)
+      alias orig_warn warn
+      def warn(msg, *args, **kwargs)
         if msg.start_with?('warning: parser/current is loading')
           # Silence this warning
+        elsif kwargs.empty?
+          orig_warn(msg, *args)
         else
-          orig_warn(msg, category: category)
+          orig_warn(msg, *args, **kwargs)
         end
       end
     end

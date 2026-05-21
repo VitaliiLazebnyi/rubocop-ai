@@ -7,7 +7,13 @@ require 'yaml'
 RSpec.describe RuboCop::AI, :bug_RB_AI_001 do
   let(:release_workflow_path) { File.join(described_class.project_root, '.github', 'workflows', 'release.yml') }
   let(:version_file_path) { File.join(described_class.project_root, 'lib', 'rubocop', 'ai', 'version.rb') }
-  let(:workflow) { YAML.safe_load_file(release_workflow_path) }
+  let(:workflow) do
+    if YAML.respond_to?(:safe_load_file)
+      YAML.safe_load_file(release_workflow_path)
+    else
+      YAML.safe_load(File.read(release_workflow_path))
+    end
+  end
   let(:steps) { workflow.dig('jobs', 'build_and_release', 'steps') }
   let(:sync_step) { steps.find { |step| step['name'] == 'Synchronize Version' } }
 
