@@ -40,7 +40,7 @@ jobs:
         
     - name: Synchronize Version
       run: |
-        sed -i "s/T.let('.*', String)/T.let('${{ env.VERSION }}', String)/" lib/rubocop/ai/version.rb
+        sed -i "s/VERSION = '.*'/VERSION = '${{ env.VERSION }}'/" lib/rubocop/ai/version.rb
         
     - name: Build Gem
       run: gem build rubocop-ai.gemspec

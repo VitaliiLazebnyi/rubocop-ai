@@ -38,4 +38,43 @@ RSpec.describe RuboCop::Cop::AI::AdverbSpam, :config, :req_RB_AI_001, :req_RB_AI
       def blank; end
     RUBY
   end
+
+  it 'preserves leading layout spacing correctly before surrounding text (BUG-RB-002)', :bug_RB_AI_002 do
+    expect_offense(<<~RUBY)
+      # securely accurately done
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^ AI/AdverbSpam: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
+      def layout_space; end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      # done
+      def layout_space; end
+    RUBY
+  end
+
+  it 'preserves layout space for parameter docs with trailing text (BUG-RB-002)', :bug_RB_AI_002 do
+    expect_offense(<<~RUBY)
+      # @param x [String] securely accurately dynamically done
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AI/AdverbSpam: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
+      def param_space; end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      # @param x [String] done
+      def param_space; end
+    RUBY
+  end
+
+  it 'defaults multiple hashes to a single hash when all text is stripped (BUG-RB-003)', :bug_RB_AI_003 do
+    expect_offense(<<~RUBY)
+      ## securely accurately
+      ^^^^^^^^^^^^^^^^^^^^^^ AI/AdverbSpam: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
+      def double_hash; end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      #
+      def double_hash; end
+    RUBY
+  end
 end

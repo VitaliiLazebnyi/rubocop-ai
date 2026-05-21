@@ -114,7 +114,7 @@ jobs:
         bundler-cache: true
     - run: bundle exec rspec
 
-  # Repeat the above structure for `lint`, `typecheck`, `docs`, `build` 
+  # Repeat the above structure for `lint`, `typecheck`, `docs`, `build`
   # pinned to the highest Ruby version (e.g. ruby: ["4.0"])
 ```
 1. **Target Matrix Execution**: Runtime execution paths (specifically `test`, which exercises runtime logic including `sorbet-runtime`) must be tested against a full matrix of officially supported Ruby versions (e.g., `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility across environments. Conversely, static checks and builds (`lint`, `typecheck`, `docs`, `build`) are environment-independent. Static typecheckers (`srb tc`) parse the syntax tree deterministically without relying on the underlying Ruby runtime. Thus, these static checks should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute bandwidth.
@@ -153,7 +153,7 @@ jobs:
       with:
         ruby-version: 4.0
         bundler-cache: true
-    
+
     # 1. Safely inject multiline cryptographic key via `env` and `printf`
     - name: Recover Private Key
       env:
@@ -162,18 +162,18 @@ jobs:
         mkdir -p ~/.gem
         printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem
         chmod 0600 ~/.gem/gem-private_key.pem
-        
+
     # 2. Extract Tag and sync codebase
     - run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
     - run: sed -i "s/T.let('.*', String)/T.let('${{ env.VERSION }}', String)/" lib/rubocop/ai/version.rb
-        
+
     # 3. Manually build to avoid rake constraints
     - run: gem build rubocop-ai.gemspec
-      
+
     - uses: softprops/action-gh-release@v1
       with:
         files: rubocop-ai-${{ env.VERSION }}.gem
-        
+
     # 4. Generate short-lived OIDC Token
     - uses: rubygems/configure-rubygems-credentials@main
 

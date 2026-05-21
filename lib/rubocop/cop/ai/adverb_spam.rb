@@ -29,7 +29,7 @@ module RuboCop
 
         # Pattern to match sequences of 2 or more words ending in 'ly'
         # including optional spaces and punctuation in between (but NOT newlines).
-        SPAM_PATTERN = T.let(/(?:[ \t]*\b[a-zA-Z]+ly\b[ \t,.]*){2,}/i, Regexp)
+        SPAM_PATTERN = T.let(/(?:\b[a-zA-Z]+ly\b[ \t,.]*){2,}/i, Regexp)
 
         # Triggered for each new file/investigation to scan comments for invalid documentation spam.
         #
@@ -42,6 +42,7 @@ module RuboCop
 
             add_offense(comment) do |corrector|
               new_text = text.gsub(SPAM_PATTERN, '').rstrip
+              new_text = '#' if new_text.match?(/\A#*[ \t]*\z/)
 
               corrector.replace(comment, new_text)
             end
