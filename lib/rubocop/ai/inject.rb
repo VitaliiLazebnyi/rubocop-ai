@@ -1,27 +1,25 @@
-# typed: strict
+# typed: strong
 # frozen_string_literal: true
 
-require 'yaml'
+require 'rubocop'
 require 'sorbet-runtime'
 
 module RuboCop
   module AI
-    # Injects the default configuration cleanly into RuboCop
+    # Injects the default configuration of this extension into RuboCop.
     module Inject
       extend T::Sig
 
-      # Applies the default config
+      # Adds the cops of +config/default.yml+, with their settings, to RuboCop's default configuration.
+      # The rest of RuboCop's defaults (including the +Preview+ settings of its own cops) is kept as is.
+      #
       # @return [void]
       sig { void }
       def self.defaults!
-        path = File.join(RuboCop::AI.project_root, 'config', 'default.yml')
-        # We explicitly cast to handle missing typing in RuboCop YAML internals
-        hash = T.cast(RuboCop::ConfigLoader.send(:load_yaml_configuration, path), T::Hash[T.untyped, T.untyped])
-        config = RuboCop::Config.new(hash, path)
+        config = Config.new(ConfigLoader.load_yaml_configuration(File.join(AI.project_root, 'config', 'default.yml')))
         config.make_excludes_absolute
-        merged = RuboCop::ConfigLoader.default_configuration.merge(config)
-        merged_config = RuboCop::Config.new(merged.to_h, RuboCop::ConfigLoader.default_configuration.loaded_path)
-        RuboCop::ConfigLoader.instance_variable_set(:@default_configuration, merged_config)
+        default = ConfigLoader.default_configuration
+        ConfigLoader.default_configuration = Config.new(default.merge(config), default.loaded_path)
       end
     end
   end
