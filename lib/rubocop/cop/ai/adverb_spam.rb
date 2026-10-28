@@ -1,4 +1,4 @@
-# typed: strict
+# typed: strong
 # frozen_string_literal: true
 
 require 'rubocop'
@@ -25,28 +25,56 @@ module RuboCop
         extend ::RuboCop::Cop::AutoCorrector
 
         # Detailed explanation of what the cop expects to find and correct when triggered.
-        MSG = T.let('Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).', String)
+        MSG = 'Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).'
+        public_constant :MSG
 
-        # Pattern to match sequences of 2 or more words ending in 'ly'
+        # Common words that end in 'ly' but are not adverbs (verbs and nouns such as "apply" or "family").
+        # They never count towards an adverb chain, so ordinary prose like "Only apply this" is left alone.
+        NON_ADVERBS = %w[
+          ally anomaly apply assembly belly bully butterfly comply family fly folly imply italy jelly
+          july lily monopoly multiply rally rely reply supply tally
+        ].freeze
+        public_constant :NON_ADVERBS
+
+        # Pattern to match sequences of 2 or more adverbs (words ending in 'ly' that are not NON_ADVERBS)
         # including optional spaces and punctuation in between (but NOT newlines).
-        SPAM_PATTERN = T.let(/(?:\b[a-zA-Z]+ly\b[ \t,.]*){2,}/i, Regexp)
+        SPAM_PATTERN = /(?:\b(?!(?:#{NON_ADVERBS.join('|')})\b)[a-z]+ly\b[ \t,.]*){2,}/i
+        public_constant :SPAM_PATTERN
+
+        # What remains of a comment once its adverb chains are removed, when it is only comment markers.
+        BARE_COMMENT = /\A#*[ \t]*\z/
+        private_constant :BARE_COMMENT
+
+        # The comment text without its adverb chains; a single +#+ when nothing else remains.
+        #
+        # @param text [String] the text of a comment, including its leading +#+
+        # @return [String]
+        sig { params(text: String).returns(String) }
+        def self.correct(text)
+          remaining = text.gsub(SPAM_PATTERN, '').rstrip
+          remaining.match?(BARE_COMMENT) ? '#' : remaining
+        end
 
         # Triggered for each new file/investigation to scan comments for invalid documentation spam.
         #
         # @return [void]
         sig { void }
         def on_new_investigation
-          processed_source.comments.each do |comment|
-            text = comment.text
-            next unless text.match?(SPAM_PATTERN)
+          processed_source.comments.each { |comment| check(comment) }
+        end
 
-            add_offense(comment) do |corrector|
-              new_text = text.gsub(SPAM_PATTERN, '').rstrip
-              new_text = '#' if new_text.match?(/\A#*[ \t]*\z/)
+        private
 
-              corrector.replace(comment, new_text)
-            end
-          end
+        # Reports +comment+, with its correction, when it contains an adverb chain.
+        #
+        # @param comment [Parser::Source::Comment]
+        # @return [void]
+        sig { params(comment: Parser::Source::Comment).void }
+        def check(comment)
+          text = comment.text
+          return unless text.match?(SPAM_PATTERN)
+
+          add_offense(comment) { |corrector| corrector.replace(comment, AdverbSpam.correct(text)) }
         end
       end
     end
