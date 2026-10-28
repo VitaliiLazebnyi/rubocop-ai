@@ -1,0 +1,14 @@
+# markdownlint (https://github.com/DavidAnson/markdownlint): every rule enabled, with these settings.
+config:
+  default: true
+  # Prose is wrapped at the same width as the code (Layout/LineLength in .rubocop.yml); tables and code
+  # blocks hold content (commands, YAML, Ruby) that is not wrapped prose.
+  MD013:
+    line_length: 120
+    code_blocks: false
+    tables: false
+ignores:
+  - 'vendor/**'
+  - 'coverage/**'
+  - 'doc/**'
+  - 'tmp/**'

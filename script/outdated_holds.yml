@@ -1,0 +1,35 @@
+# Everything that is deliberately NOT at its newest release, with the exact upstream reason.
+# `rake outdated` (script/outdated.rb) fails for anything else that is outdated, and for a hold that is no
+# longer needed. Checked against rubygems.org and ruby-lang.org on 2026-10-28.
+
+# Gems held back because an upstream gemspec forbids the newest release.
+gems:
+  diff-lcs:
+    newest: 2.0.0
+    blocked_by:
+      - 'rspec-expectations 3.13.5: diff-lcs >= 1.2.0, < 2.0'
+      - 'rspec-mocks 3.13.8: diff-lcs >= 1.2.0, < 2.0'
+  prism:
+    newest: 2.1.0
+    blocked_by:
+      - 'rubocop-ast 1.50.0: prism ~> 1.7'
+      - 'flay 2.14.4: prism ~> 1.7'
+      - 'rbi 0.5.0 (required by tapioca 0.20.0): prism ~> 1.0'
+
+# Jobs that run on a Ruby other than the newest one (.ruby-version). Every other Ruby that CI names is the
+# newest patch release of a supported minor version (the test matrix covers each of them).
+ruby:
+  mutant:
+    version: 3.3.13
+    workflow: .github/workflows/mutation.yml
+    reason: >-
+      mutant 0.17.1 (the newest release) requires `parser/current` unconditionally (lib/mutant.rb:35), and
+      parser 3.3.13.0 (the newest release) only has grammars up to Ruby 3.3. On any other Ruby, loading it
+      prints "warning: parser/current is loading parser/ruby33, which recognizes 3.3.x-compliant syntax, but
+      you are running 4.0.9", and on Ruby 4.0 parser/source/buffer.rb:97 also prints "warning: string returned
+      by :__dir__.to_s will be frozen in the future" for every mutation. Every mutant is killed on Ruby 4.0.9
+      as well (158/158); only these warnings keep mutation testing on Ruby 3.3.13.
+    # The hold is re-examined (and `rake outdated` fails as stale) as soon as either gem has a new release.
+    until_newer_than:
+      mutant: 0.17.1
+      parser: 3.3.13.0
