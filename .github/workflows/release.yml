@@ -12,8 +12,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  RUBYOPT: -W:deprecated -W:performance
 
 jobs:
   # Gate the release on the full verification suite so a broken tagged commit
@@ -23,8 +21,6 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: read
-    env:
-      RUBYOPT: -w -W:deprecated -W:performance
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -34,10 +30,16 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: false
     - name: Check the Ruby version
       run: script/check_ruby.sh
     - run: bundle install --jobs 4 --retry 3
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-w -W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake
 
   build_and_release:
@@ -56,10 +58,16 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: false
     - name: Check the Ruby version
       run: script/check_ruby.sh
     - run: bundle install --jobs 4 --retry 3
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
 
     # Validate the tag format and require it to match the committed version.rb.
     # The version file is the single source of truth; a mistyped tag fails loudly

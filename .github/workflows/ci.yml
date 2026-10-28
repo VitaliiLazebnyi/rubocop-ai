@@ -14,8 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  RUBYOPT: -W:deprecated -W:performance
 
 jobs:
   test:
@@ -27,8 +25,6 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["3.3.13", "3.4.12", "4.0.9"]
-    env:
-      RUBYOPT: -w -W:deprecated -W:performance
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -37,11 +33,17 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: ${{ matrix.ruby }}
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       env:
         EXPECTED_RUBY: ${{ matrix.ruby }}
       run: script/check_ruby.sh "$EXPECTED_RUBY"
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-w -W:deprecated -W:performance' >> "$GITHUB_ENV"
     # SimpleCov enforces minimum_coverage 100 (line + branch) and fails the run below it.
     - name: RSpec with the 100% line + branch coverage gate
       run: bundle exec rspec
@@ -52,8 +54,6 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: read
-    env:
-      RUBYOPT: -w -W:deprecated -W:performance
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -62,9 +62,19 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: "3.3.13"
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh 3.3.13
+    - name: Install the oldest supported RuboCop
+      run: bundle install --quiet
+      env:
+        BUNDLE_GEMFILE: gemfiles/oldest.gemfile
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-w -W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake spec_oldest
 
   lint:
@@ -80,9 +90,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake rubocop
     - name: Forbid inline suppressions
       run: script/forbidden_suppressions.sh
@@ -100,9 +116,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake typecheck
 
   docs:
@@ -118,9 +140,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake yard
 
   smells:
@@ -136,9 +164,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake reek flay
 
   # Every gem must be at its newest release, except those on the documented hold list
@@ -156,9 +190,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake outdated
 
   markdownlint:
@@ -200,9 +240,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: gem build rubocop-ai.gemspec
 
   warning-gate:

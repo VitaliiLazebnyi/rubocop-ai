@@ -36,7 +36,7 @@ Not part of the default task, but also enforced in CI:
 
 ```bash
 bundle exec rake mutant       # mutation testing; every mutation must be killed (see .mutant.yml)
-bundle exec rake outdated     # every gem at its newest release, except the holds in script/outdated_holds.yml
+bundle exec rake outdated     # gems, RubyGems, Bundler and Ruby at their newest, except script/outdated_holds.yml
 bundle exec rake spec_oldest  # the cop specs against the oldest supported RuboCop (gemfiles/oldest.gemfile)
 gem build rubocop-ai.gemspec
 ```
@@ -53,8 +53,10 @@ CI also runs these checks, which need tools outside the bundle:
 To run them locally: `npx markdownlint-cli2 '**/*.md'`, `typos`, `actionlint`, `shellcheck script/*.sh
 .githooks/pre-commit`, `zizmor --persona pedantic .github/workflows` and `gitleaks git .`.
 
-Mutant parses the code with the `parser` gem, which only has a grammar for Ruby 3.3; run it on Ruby 3.3.13 (CI
-does) to avoid the `parser/current` warning. While iterating, run one subject at a time, e.g.
+Mutant requires the `parser` gem, which only has a grammar for Ruby 3.3: on newer Rubies it prints warnings. Run it
+on Ruby 3.3.13, as CI does; the hold and its exact upstream reason are recorded in `script/outdated_holds.yml`, and
+`rake outdated` fails once a newer mutant or parser release makes it worth re-checking. While iterating, run one
+subject at a time, e.g.
 `bundle exec mutant run 'RuboCop::Cop::AI::AdverbSpam*'`.
 
 ## Rules
@@ -70,9 +72,10 @@ does) to avoid the `parser/current` warning. While iterating, run one subject at
 - **Behavior is specified.** Every behavioral fix needs a regression spec (tagged with its `BUGS.md` identifier), and
   every surviving mutant needs a test that kills it (or, when the mutation cannot change observable behavior, simpler
   code).
-- **Dependencies are current.** Every gem, the Ruby in `.ruby-version` and every GitHub Action (pinned to a commit
-  SHA) is at its newest release. A gem that cannot be is listed in `script/outdated_holds.yml` with the upstream
-  constraint that blocks it; `rake outdated` fails for any other outdated gem and for a hold that is no longer needed.
+- **Dependencies are current.** Every gem, RubyGems, Bundler, the Ruby in `.ruby-version` (and every Ruby the
+  workflows name, each the newest patch of its minor) and every GitHub Action (pinned to a commit SHA) is at its newest
+  release. Anything that cannot be is listed in `script/outdated_holds.yml` with the upstream reason; `rake outdated`
+  fails for anything else that is outdated and for a hold that is no longer needed.
 - `lib/` is `# typed: strong`. Type the RuboCop APIs it calls in `sorbet/rbi/shims/rubocop.rbi` rather than loosening
   the typed sigil. Spec files are `# typed: false`: the RSpec DSL cannot be typed without `T.bind`.
 - Update `CHANGELOG.md` for user-visible changes.

@@ -15,8 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  RUBYOPT: -W:deprecated -W:performance
 
 jobs:
   bundler-audit:
@@ -32,9 +30,15 @@ jobs:
     - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
         ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
         bundler-cache: true
     - name: Check the Ruby version
       run: script/check_ruby.sh
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
     - run: bundle exec rake audit
 
   # Requires the repository's Dependency graph to be enabled (Settings > Code security).
