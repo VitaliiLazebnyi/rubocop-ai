@@ -14,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 all_checks=(
-  suppressions rubocop spec spec_oldest typecheck yard reek flay flog debride audit package mutant outdated
+  suppressions rubocop spec spec_oldest typecheck yard reek flay flog debride audit package mutant outdated scorecard
   markdown yaml editorconfig shellcheck shfmt actionlint zizmor typos gitleaks
 )
 readonly all_checks
@@ -43,6 +43,7 @@ check_audit() { rake_task audit; }
 check_package() { rake_task package; }
 check_mutant() { LANG=C.UTF-8 LC_ALL=C.UTF-8 rake_task mutant; }
 check_outdated() { rake_task outdated; }
+check_scorecard() { rake_task scorecard; }
 check_markdown() { rumdl check --deny-config-warnings .; }
 check_yaml() { yamllint --strict .; }
 check_editorconfig() { editorconfig-checker; }

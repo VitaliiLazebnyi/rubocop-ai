@@ -44,6 +44,7 @@ A check fails when its command fails, and when its output holds a single warning
 | `package`      | `gem build --strict`, then the gem installs into an empty `GEM_HOME` and loads without a warning |
 | `mutant`       | mutation testing: every mutation is killed (see `.mutant.yml`)                                   |
 | `outdated`     | gems, Ruby, actions and tools at their newest release, except `script/outdated_holds.yml`        |
+| `scorecard`    | OpenSSF Scorecard of 3 or more for every gem and action, except `script/scorecard_allowlist.yml` |
 | `markdown`     | rumdl, every rule (`.rumdl.toml`)                                                                |
 | `yaml`         | `yamllint --strict`, every rule (`.yamllint.yaml`)                                               |
 | `editorconfig` | editorconfig-checker on every tracked file (`.editorconfig`)                                     |

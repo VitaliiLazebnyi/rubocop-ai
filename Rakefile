@@ -159,6 +159,11 @@ task :outdated do
   ruby('script/outdated.rb')
 end
 
+desc 'Fail on dependencies below the OpenSSF Scorecard threshold that are not on the allowlist'
+task :scorecard do
+  ruby('script/scorecard.rb')
+end
+
 desc 'Run mutation testing (see .mutant.yml)'
 task :mutant do
   sh('bundle', 'exec', 'mutant', 'run')
