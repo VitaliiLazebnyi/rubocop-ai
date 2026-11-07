@@ -15,7 +15,8 @@ require 'yaml'
 # - RubyGems and Bundler,
 # - the Ruby in .ruby-version, and every Ruby the workflows name (each must be the newest patch of its minor),
 # - every GitHub Action, pinned to the commit of its newest release tag,
-# - every release binary of tools/releases.txt.
+# - every release binary of tools/releases.txt,
+# - the Python of the linters (.python-version), held back by a documented hold.
 module Outdated
   extend T::Sig
 
@@ -43,6 +44,14 @@ module Outdated
     def self.gem(name)
       body = Net::HTTP.get(URI("https://rubygems.org/api/v1/versions/#{name}/latest.json")).to_s
       JSON.parse(body).fetch('version').to_s
+    end
+
+    # @param name [String] a Python package name
+    # @return [String] the newest release of the package on PyPI
+    sig { params(name: String).returns(String) }
+    def self.pypi(name)
+      body = Net::HTTP.get(URI("https://pypi.org/pypi/#{name}/json")).to_s
+      JSON.parse(body).fetch('info').fetch('version').to_s
     end
 
     # @return [Array<Gem::Version>] every Ruby release
@@ -356,6 +365,25 @@ module Outdated
     check_releases(report)
   end
 
+  # The Python of the linters is the one its hold names, and the hold is re-examined as soon as the package it waits
+  # for has a new release on PyPI.
+  #
+  # @param report [Report]
+  # @return [void]
+  # @param hold [Hash] the Python hold
+  sig { params(hold: T::Hash[String, Object], report: Outdated::Report).void }
+  def self.check_python(hold, report)
+    current = File.read(File.join(Outdated::ROOT, '.python-version')).strip
+    report.compare('Python in .python-version, held at', current, hold.fetch('version').to_s)
+    Hash.try_convert(hold.fetch('until_newer_than')).to_h.each do |name, version|
+      report.compare(
+        "#{name} on PyPI, which the Python hold waits for",
+        version.to_s,
+        Outdated::Upstream.pypi(name.to_s)
+      )
+    end
+  end
+
   # Every release binary of tools/releases.txt is the newest release of its tool.
   #
   # @param report [Report]
@@ -376,16 +404,22 @@ module Outdated
   # @return [void]
   sig { params(report: Outdated::Report).void }
   def self.check_holds(report)
-    gem_holds, ruby_holds = holds
+    gem_holds, ruby_holds, python_hold = holds
     Outdated::Gems.new(gem_holds, report).check
     Outdated::Rubies.new(ruby_holds, workflows, report).check
-    [*gem_holds, *ruby_holds].each { |held, hold| held_until(held, hold, report) }
+    check_python(python_hold, report)
+    holds_until([*gem_holds, *ruby_holds], report)
   end
 
-  # @return [Array(Hash, Hash)] the gem holds and the Ruby holds
-  sig { returns([T::Hash[String, T::Hash[String, Object]], T::Hash[String, T::Hash[String, Object]]]) }
+  # @return [Array(Hash, Hash, Hash)] the gem holds, the Ruby holds and the Python hold
+  sig do
+    returns(
+      [T::Hash[String, T::Hash[String, Object]], T::Hash[String, T::Hash[String, Object]], T::Hash[String, Object]]
+    )
+  end
   def self.holds
-    YAML.safe_load_file(File.join(Outdated::ROOT, 'script', 'outdated_holds.yml')).fetch_values('gems', 'ruby')
+    YAML.safe_load_file(File.join(Outdated::ROOT, 'script', 'outdated_holds.yml'))
+      .fetch_values('gems', 'ruby', 'python')
   end
 
   # @return [Hash{String => String}] the text of every workflow, by file name
@@ -404,6 +438,16 @@ module Outdated
   def self.check_workflows(report)
     checker = Outdated::Workflows.new(report)
     workflows.each { |name, text| checker.check(name, text) }
+  end
+
+  # Checks every hold that waits for a release of another gem.
+  #
+  # @param holds [Array<Array(String, Hash)>] the holds, each with what it holds
+  # @param report [Report]
+  # @return [void]
+  sig { params(holds: T::Array[[String, T::Hash[String, Object]]], report: Outdated::Report).void }
+  def self.holds_until(holds, report)
+    holds.each { |held, hold| held_until(held, hold, report) }
   end
 
   # A hold that waits for a release of another gem is re-examined as soon as that gem has a new release.

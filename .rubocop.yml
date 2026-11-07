@@ -43,6 +43,12 @@ Layout/ArrayAlignment:
   EnforcedStyle: with_fixed_indentation
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
+# No exception for long URIs, qualified names or heredocs: every line fits the width (editorconfig-checker checks
+# the same limit on every file).
+Layout/LineLength:
+  AllowHeredoc: false
+  AllowQualifiedName: false
+  AllowURI: false
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 Layout/MultilineOperationIndentation:
