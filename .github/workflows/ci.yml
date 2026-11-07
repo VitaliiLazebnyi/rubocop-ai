@@ -30,7 +30,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: ${{ matrix.ruby }}
         rubygems: latest
@@ -59,7 +59,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: "3.3.13"
         rubygems: latest
@@ -87,7 +87,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -113,7 +113,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -137,7 +137,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -161,7 +161,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -187,7 +187,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -237,7 +237,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
