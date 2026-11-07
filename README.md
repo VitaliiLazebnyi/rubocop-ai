@@ -1,4 +1,4 @@
-# rubocop-ai
+# `rubocop-ai`
 
 `rubocop-ai` is a standalone RuboCop extension that identifies and remediates AI-generated spam and stereotyped
 code patterns within Ruby codebases.

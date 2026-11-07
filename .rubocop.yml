@@ -1,9 +1,143 @@
-# Maximum-strictness configuration. Every cop is run in "fail the build" mode.
-# New code has no exclusions: fix the code. A cop that cannot apply to a file is configured narrowly
-# below, with the reason. Inline RuboCop directives are forbidden (see
-# Style/DisableCopsWithinSourceCodeDirective), and there is no todo file.
+---
+# Maximum-strictness configuration: every cop of RuboCop and of every plugin is enabled (AllCops: EnabledByDefault),
+# including the pending and the disabled-by-default ones, and fails the build. There is no todo file, and inline
+# RuboCop directives are forbidden (Style/DisableCopsWithinSourceCodeDirective, script/forbidden_suppressions.sh).
+# What follows is only settings, a few files a cop cannot apply to, and the cops that cannot hold here, each with the
+# reason. The keys are sorted (yamllint key-ordering).
+
+# The cop's own documentation (its YARD example) quotes, as its "bad" example, the adverb chain the cop reports.
+# rubocop-md hands the prose of a Markdown file to every cop as Ruby comments, and the documents (README.md,
+# BUGS.md, REQUIREMENTS.md, ...) quote that example too; only their Ruby code blocks are Ruby.
+AI/AdverbSpam:
+  Exclude:
+    - "**/*.md"
+    - lib/rubocop/cop/ai/adverb_spam.rb
+
+AllCops:
+  EnabledByDefault: true
+  Exclude:
+    - .yardoc/**/*
+    - coverage/**/*
+    - doc/**/*
+    - sorbet/rbi/gems/**/*
+    - tmp/**/*
+    - vendor/**/*
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.3
+
+# A gem from a `path:` source has exactly one version, the one of that checkout (gemfiles/oldest.gemfile installs
+# rubocop-ai from this repository).
+Bundler/GemVersion:
+  AllowedGems:
+    - rubocop-ai
+
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec
+
+# editorconfig-checker requires every indentation to be a multiple of the indentation size (.editorconfig), so
+# continued lines are indented by a fixed step instead of being aligned with a column of the line above.
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+Layout/ArrayAlignment:
+  EnforcedStyle: with_fixed_indentation
+Layout/LineEndStringConcatenationIndentation:
+  EnforcedStyle: indented
+# No exception for long URIs, qualified names or heredocs: every line fits the width (editorconfig-checker checks
+# the same limit on every file).
+Layout/LineLength:
+  AllowHeredoc: false
+  AllowQualifiedName: false
+  AllowURI: false
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+Layout/ParameterAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+# Fully qualifying every constant (`::File`, `::RuboCop::Cop::AI::AdverbSpam::SPAM_PATTERN`) cannot hold together
+# with mutation testing: mutant turns each `::Name` into `Name`, a mutation no test can tell apart, so 100% killed
+# mutations becomes unreachable. It also cannot name a private constant, which is only reachable unqualified.
+Lint/ConstantResolution:
+  Enabled: false
+
+# Sorbet signatures name every parameter, including the block, so anonymous block forwarding (`&`) cannot be used in
+# typed code.
+Naming/BlockForwarding:
+  EnforcedStyle: explicit
+
+Naming/FileName:
+  Exclude:
+    # rubocop-md checks the code blocks of Markdown files as if each file were a Ruby file.
+    - "**/*.md"
+    # The gem's entry point is named after the gem, as `require 'rubocop-ai'` expects.
+    - lib/rubocop-ai.rb
+
+# Cop specs state each offense and its correction as two heredocs of source code; a heredoc is one example input,
+# not example logic, so it counts as one line.
+RSpec/ExampleLength:
+  CountAsOne:
+    - heredoc
+
+# These cops forbid Sorbet altogether (`sig`, `T::Sig`, `T.let`): they exist for codebases that remove Sorbet, and
+# contradict Sorbet/EnforceSignatures and the `typed: strong` library.
+Sorbet/ForbidSig:
+  Enabled: false
+Sorbet/ForbidTLet:
+  Enabled: false
+Sorbet/ForbidTSig:
+  Enabled: false
+
+# Only for applications that monkey patch `Module` to include T::Sig everywhere. A gem must not patch `Module`, so
+# every class that declares signatures extends T::Sig itself.
+Sorbet/RedundantExtendTSig:
+  Enabled: false
+
+# Every Ruby file is at least `typed: strict`, except the example files of the specs (`*_spec.rb`), which are
+# `typed: false`: Sorbet runs the blocks of the RSpec DSL (`describe`, `it`, `let`, ...) with the `self` of the
+# file, where `expect`, `let` and the matchers do not exist, and binding `self` needs `T.bind`, which is forbidden.
+# spec_helper.rb and spec/support/ are `typed: strict`.
+Sorbet/StrictSigil:
+  Exclude:
+    - spec/**/*_spec.rb
+
+# lib/ is `typed: strong`; the RuboCop APIs it calls are typed in sorbet/rbi/shims/rubocop.rbi.
+Sorbet/StrongSigil:
+  Include:
+    - lib/**/*.rb
+
+Sorbet/TrueSigil:
+  Exclude:
+    - spec/**/*_spec.rb
+
+Style/Copyright:
+  AutocorrectNotice: "# Copyright (c) 2026 Vitalii Lazebnyi"
+  Exclude:
+    # rubocop-md checks each Ruby code block of a Markdown file as a file of its own; the blocks are excerpts.
+    - "**/*.md"
+  Notice: ^Copyright \(c\) 2026 Vitalii Lazebnyi$
+
+# Sorbet/EmptyLineAfterSig requires `def` to follow its `sig` directly, so a method's documentation sits above the
+# `sig`, where this cop does not look for it. Every method, public or not, is documented all the same: `rake yard`
+# fails below 100% documented and on any YARD warning.
+Style/DocumentationMethod:
+  Enabled: false
+
+# rubocop-md: the Ruby code blocks of the Markdown files are excerpts, not standalone programs.
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - "**/*.md"
+
+# Neither style can hold. `fetch` (the safe one: it raises on a missing key) is also demanded of every other `[]`
+# call, such as Sorbet's generic types (`T::Array[String]`) and MatchData, which have no `fetch`; `brackets`
+# forbids `fetch` itself.
+Style/HashLookupMethod:
+  Enabled: false
+
 plugins:
   - rubocop-md
+  - rubocop-packaging
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
@@ -13,104 +147,3 @@ plugins:
 # The repository checks itself with its own cop (AI/AdverbSpam).
 require:
   - ./lib/rubocop-ai
-
-AllCops:
-  NewCops: enable
-  SuggestExtensions: false
-  TargetRubyVersion: 3.3
-  Exclude:
-    - 'vendor/**/*'
-    - 'coverage/**/*'
-    - 'sorbet/rbi/gems/**/*'
-    - 'tmp/**/*'
-    - 'doc/**/*'
-    - '.yardoc/**/*'
-
-# --- Optional (disabled-by-default) cops that make sense for this codebase ---
-Layout/ClassStructure:
-  Enabled: true
-Layout/EmptyLineAfterMultilineCondition:
-  Enabled: true
-Layout/LineLength:
-  Max: 120
-Lint/NumberConversion:
-  Enabled: true
-Naming/InclusiveLanguage:
-  Enabled: true
-Performance/ChainArrayAllocation:
-  Enabled: true
-Lint/RedundantCopDisableDirective:
-  Enabled: true
-Sorbet/ForbidTUnsafe:
-  Enabled: true
-Sorbet/ForbidTUntyped:
-  Enabled: true
-  Include:
-    - 'lib/**/*.rb'
-Style/ConstantVisibility:
-  Enabled: true
-Style/DisableCopsWithinSourceCodeDirective:
-  Enabled: true
-# Style/DocumentationMethod is intentionally NOT enabled: it requires the comment to sit
-# directly above `def`, but Sorbet's `sig { ... }` must sit between them. Documentation
-# completeness is enforced instead by the YARD gate (`yard stats` must report 100%).
-Style/InvertibleUnlessCondition:
-  Enabled: true
-Style/MethodCalledOnDoEndBlock:
-  Enabled: true
-Style/RequireOrder:
-  Enabled: true
-Style/Send:
-  Enabled: true
-Style/SingleLineBlockParams:
-  Enabled: true
-Style/StringHashKeys:
-  Enabled: true
-Style/Documentation:
-  Enabled: true
-
-Gemspec/DevelopmentDependencies:
-  EnforcedStyle: gemspec
-
-# --- Sorbet: strictest sigils ---
-# lib/ is `typed: strong`; the RuboCop APIs it calls are typed in sorbet/rbi/shims/rubocop.rbi.
-Sorbet/StrongSigil:
-  Enabled: true
-  Include:
-    - 'lib/**/*.rb'
-Sorbet/EnforceSigilOrder:
-  Enabled: true
-Sorbet/EnforceSignatures:
-  Enabled: true
-  Include:
-    - 'lib/**/*.rb'
-
-Naming/FileName:
-  Exclude:
-    # The gem's entry point is named after the gem, as `require 'rubocop-ai'` expects.
-    - 'lib/rubocop-ai.rb'
-    # rubocop-md checks the code blocks of Markdown files as if each file were a Ruby file.
-    - '**/*.md'
-
-# rubocop-md: README snippets are illustrative, not standalone programs.
-Style/FrozenStringLiteralComment:
-  Exclude:
-    - '**/*.md'
-
-# Sorbet signatures name every parameter, including the block, so anonymous block forwarding (`&`)
-# cannot be used in typed code.
-Naming/BlockForwarding:
-  EnforcedStyle: explicit
-
-# The cop's own documentation (its YARD example and the README) quotes, as its "bad" example, the adverb chain
-# the cop reports.
-AI/AdverbSpam:
-  Exclude:
-    - 'lib/rubocop/cop/ai/adverb_spam.rb'
-    - 'README.md'
-
-# Cop specs state each offense and its correction as two heredocs of source code; a heredoc is one
-# example input, not example logic, so it counts as one line.
-RSpec/ExampleLength:
-  CountAsOne:
-    - heredoc

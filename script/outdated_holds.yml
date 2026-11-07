@@ -1,21 +1,34 @@
-# Everything that is deliberately NOT at its newest release, with the exact upstream reason.
-# `rake outdated` (script/outdated.rb) fails for anything else that is outdated, and for a hold that is no
-# longer needed. Checked against rubygems.org and ruby-lang.org on 2026-11-07.
+---
+# Everything that is deliberately NOT at its newest release, with the exact upstream reason. `rake outdated`
+# (script/outdated.rb) fails for anything else that is outdated, and for a hold that is no longer needed. Checked
+# against rubygems.org and ruby-lang.org on 2026-11-07.
 
-# Gems held back because an upstream gemspec forbids the newest release, or because the newest release
-# cannot be loaded without a warning.
+# Gems held back because an upstream gemspec forbids the newest release, or because the newest release cannot be
+# loaded without a warning.
 gems:
   diff-lcs:
+    blocked_by:
+      - "rspec-expectations 3.13.6: diff-lcs >= 1.2.0, < 2.0"
+      - "rspec-mocks 3.13.9: diff-lcs >= 1.2.0, < 2.0"
     newest: 2.0.0
-    blocked_by:
-      - 'rspec-expectations 3.13.6: diff-lcs >= 1.2.0, < 2.0'
-      - 'rspec-mocks 3.13.9: diff-lcs >= 1.2.0, < 2.0'
   prism:
-    newest: 2.1.0
     blocked_by:
-      - 'rubocop-ast 1.50.0: prism ~> 1.7'
-      - 'flay 2.14.4: prism ~> 1.7'
-      - 'rbi 0.5.0 (required by tapioca 0.20.0): prism ~> 1.0'
+      - "rubocop-ast 1.50.0: prism ~> 1.7"
+      - "flay 2.14.4, flog 4.9.4, debride 1.15.2: prism ~> 1.7"
+      - "rbi 0.5.0 (required by tapioca 0.20.0): prism ~> 1.0"
+    newest: 2.1.0
+  # Held by this repository (the exact requirement in Gemfile, for the development bundle only; the gem still
+  # accepts every RuboCop >= 1.56), not by an upstream gemspec.
+  rubocop:
+    newest: 1.92.2
+    reason: >-
+      RuboCop 1.92.2 warns about obsolete configuration shipped by a plugin (rubocop/rubocop#14045), and
+      rubocop-md 2.0.4 (held below) still sets `IgnoredPatterns` for Layout/LineLength in its default.yml:
+      "Warning: obsolete configuration found in the `rubocop-md` plugin: obsolete parameter `IgnoredPatterns`
+      (for `Layout/LineLength`) ... has been renamed to `AllowedPatterns`." That fails the same warning-free run.
+      rubocop-md 3.0.0 renames the parameter, so both holds end together once kramdown is released with the fix.
+    until_newer_than:
+      kramdown: 2.5.2
   # Held by this repository (the `~> 2.0` requirement in rubocop-ai.gemspec), not by an upstream gemspec.
   rubocop-md:
     newest: 3.0.0
@@ -27,33 +40,29 @@ gems:
       gettalong/kramdown#821) is not in a release yet.
     until_newer_than:
       kramdown: 2.5.2
-  # Held by this repository (the exact requirement in Gemfile, for the development bundle only; the gem still
-  # accepts every RuboCop >= 1.56), not by an upstream gemspec.
-  rubocop:
-    newest: 1.92.2
-    reason: >-
-      RuboCop 1.92.2 warns about obsolete configuration shipped by a plugin (rubocop/rubocop#14045), and
-      rubocop-md 2.0.4 (held above) still sets `IgnoredPatterns` for Layout/LineLength in its default.yml:
-      "Warning: obsolete configuration found in the `rubocop-md` plugin: obsolete parameter `IgnoredPatterns`
-      (for `Layout/LineLength`) ... has been renamed to `AllowedPatterns`." That fails the same warning-free run.
-      rubocop-md 3.0.0 renames the parameter, so both holds end together once kramdown is released with the fix.
-    until_newer_than:
-      kramdown: 2.5.2
 
-# Jobs that run on a Ruby other than the newest one (.ruby-version). Every other Ruby that CI names is the
-# newest patch release of a supported minor version (the test matrix covers each of them).
+# The Python of the linters (.python-version, tools/requirements.txt) is not the newest release: PyYAML 6.0.3 (the
+# newest release; yamllint depends on it) publishes no wheel for Python 3.15, and the linters are installed from
+# wheels only (`--only-binary :all:`). `rake outdated` fails as soon as a newer PyYAML is released, to re-check.
+python:
+  until_newer_than:
+    pyyaml: 6.0.3
+  version: "3.14"
+
+# Jobs that run on a Ruby other than the newest one (.ruby-version). Every other Ruby that CI names is the newest
+# patch release of a supported minor version (the test matrix covers each of them).
 ruby:
   mutant:
-    version: 3.3.13
-    workflow: .github/workflows/mutation.yml
     reason: >-
       mutant 0.17.1 (the newest release) requires `parser/current` unconditionally (lib/mutant.rb:35), and
       parser 3.3.13.0 (the newest release) only has grammars up to Ruby 3.3. On any other Ruby, loading it
       prints "warning: parser/current is loading parser/ruby33, which recognizes 3.3.x-compliant syntax, but
       you are running 4.0.9", and on Ruby 4.0 parser/source/buffer.rb:97 also prints "warning: string returned
       by :__dir__.to_s will be frozen in the future" for every mutation. Every mutant is killed on Ruby 4.0.9
-      as well (158/158); only these warnings keep mutation testing on Ruby 3.3.13.
+      as well; only these warnings keep mutation testing on Ruby 3.3.13.
     # The hold is re-examined (and `rake outdated` fails as stale) as soon as either gem has a new release.
     until_newer_than:
       mutant: 0.17.1
       parser: 3.3.13.0
+    version: 3.3.13
+    workflow: .github/workflows/mutation.yml

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Vitalii Lazebnyi
 # typed: strong
 # frozen_string_literal: true
 
@@ -31,8 +32,29 @@ module RuboCop
         # Common words that end in 'ly' but are not adverbs (verbs and nouns such as "apply" or "family").
         # They never count towards an adverb chain, so ordinary prose like "Only apply this" is left alone.
         NON_ADVERBS = %w[
-          ally anomaly apply assembly belly bully butterfly comply family fly folly imply italy jelly
-          july lily monopoly multiply rally rely reply supply tally
+          ally
+          anomaly
+          apply
+          assembly
+          belly
+          bully
+          butterfly
+          comply
+          family
+          fly
+          folly
+          imply
+          italy
+          jelly
+          july
+          lily
+          monopoly
+          multiply
+          rally
+          rely
+          reply
+          supply
+          tally
         ].freeze
         public_constant :NON_ADVERBS
 

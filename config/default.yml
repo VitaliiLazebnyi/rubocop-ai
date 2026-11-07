@@ -1,4 +1,5 @@
+---
 AI/AdverbSpam:
-  Description: 'Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).'
+  Description: Avoid AI-generated spam inside comments (excessive adverbs/meaningless words).
   Enabled: true
-  VersionAdded: '0.1.0'
+  VersionAdded: 0.1.0

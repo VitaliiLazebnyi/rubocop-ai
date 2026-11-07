@@ -1,0 +1,8 @@
+# The tools of script/check that are published as release binaries, installed by script/install_tools.sh (the
+# linux x86_64 binaries), each pinned to a version and to the SHA-256 of its download. `rake outdated` fails while
+# any of them is not its newest release.
+# tool                version  sha256
+actionlint            1.7.12   8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+editorconfig-checker  4.0.2    44efaef3ed14c6ab52eb87481d78e5e5c204796dccf26e2f4598a61ba17f8003
+gitleaks              8.30.1   551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+shfmt                 3.14.1   76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf

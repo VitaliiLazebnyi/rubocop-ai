@@ -1,0 +1,18 @@
+# Warnings that third-party gems print, which script/warnings.sh does not count. Nothing else is exempt: every other
+# warning or deprecation notice, from this repository or from any tool, fails script/check and the warning gate of
+# every workflow.
+#
+# Each entry is an extended regular expression that must match the end of the log line, and names the exact release
+# of the gem (a newer release has to be checked again) and the exact file, line and message. Every entry is a Ruby
+# verbose-mode (`-w`) warning in code that the gem itself runs, with no setting to avoid it; each gem is at its
+# newest release (`rake outdated`).
+
+# tapioca 0.20.0 (`rake typecheck`) defines `exit` and `abort` twice in Tapioca::Runtime::Helpers: once in the
+# module body and again in the `T::Sig`-typed section below it.
+/gems/tapioca-0\.20\.0/lib/tapioca/runtime/helpers\.rb:(34|35): warning: method redefined; discarding old (exit|abort)$
+/gems/tapioca-0\.20\.0/lib/tapioca/runtime/helpers\.rb:6: warning: previous definition of (exit|abort) was here$
+
+# bundler-audit 0.9.3 (`rake audit`) redefines Thor's `say_error` (lib/bundler/audit/cli/thor_ext) to support Thor
+# releases that lack it; Thor 1.5.0 has it, so Ruby reports the redefinition.
+/gems/bundler-audit-0\.9\.3/[^ ]*/say_error\.rb:(16|28): warning: method redefined; discarding old say_error$
+/gems/thor-1\.5\.0/lib/thor/shell(/basic)?\.rb:(59|115): warning: previous definition of say_error was here$
