@@ -1,40 +1,116 @@
+# Maximum-strictness configuration. Every cop is run in "fail the build" mode.
+# New code has no exclusions: fix the code. A cop that cannot apply to a file is configured narrowly
+# below, with the reason. Inline RuboCop directives are forbidden (see
+# Style/DisableCopsWithinSourceCodeDirective), and there is no todo file.
 plugins:
+  - rubocop-md
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
+  - rubocop-sorbet
   - rubocop-thread_safety
+
+# The repository checks itself with its own cop (AI/AdverbSpam).
 require:
-  - rubocop-md
+  - ./lib/rubocop-ai
 
 AllCops:
-  TargetRubyVersion: 2.7
   NewCops: enable
   SuggestExtensions: false
+  TargetRubyVersion: 3.3
   Exclude:
     - 'vendor/**/*'
-    - 'sorbet/**/*'
+    - 'coverage/**/*'
+    - 'sorbet/rbi/gems/**/*'
     - 'tmp/**/*'
+    - 'doc/**/*'
+    - '.yardoc/**/*'
 
-Style/FrozenStringLiteralComment:
+# --- Optional (disabled-by-default) cops that make sense for this codebase ---
+Layout/ClassStructure:
   Enabled: true
-
-RSpec/ExampleLength:
-  Max: 15
-
+Layout/EmptyLineAfterMultilineCondition:
+  Enabled: true
 Layout/LineLength:
-  Max: 165
-
-Naming/FileName:
-  Exclude:
-    - 'lib/rubocop-ai.rb'
-    - '**/*.md'
+  Max: 120
+Lint/NumberConversion:
+  Enabled: true
+Naming/InclusiveLanguage:
+  Enabled: true
+Performance/ChainArrayAllocation:
+  Enabled: true
+Lint/RedundantCopDisableDirective:
+  Enabled: true
+Sorbet/ForbidTUnsafe:
+  Enabled: true
+Sorbet/ForbidTUntyped:
+  Enabled: true
+  Include:
+    - 'lib/**/*.rb'
+Style/ConstantVisibility:
+  Enabled: true
+Style/DisableCopsWithinSourceCodeDirective:
+  Enabled: true
+# Style/DocumentationMethod is intentionally NOT enabled: it requires the comment to sit
+# directly above `def`, but Sorbet's `sig { ... }` must sit between them. Documentation
+# completeness is enforced instead by the YARD gate (`yard stats` must report 100%).
+Style/InvertibleUnlessCondition:
+  Enabled: true
+Style/MethodCalledOnDoEndBlock:
+  Enabled: true
+Style/RequireOrder:
+  Enabled: true
+Style/Send:
+  Enabled: true
+Style/SingleLineBlockParams:
+  Enabled: true
+Style/StringHashKeys:
+  Enabled: true
+Style/Documentation:
+  Enabled: true
 
 Gemspec/DevelopmentDependencies:
   EnforcedStyle: gemspec
 
-# We need to enforce our own cop internally, but usually RuboCop extensions
-# don't test themselves against their own cops. We can include it manually if needed.
+# --- Sorbet: strictest sigils ---
+# lib/ is `typed: strong`; the RuboCop APIs it calls are typed in sorbet/rbi/shims/rubocop.rbi.
+Sorbet/StrongSigil:
+  Enabled: true
+  Include:
+    - 'lib/**/*.rb'
+Sorbet/EnforceSigilOrder:
+  Enabled: true
+Sorbet/EnforceSignatures:
+  Enabled: true
+  Include:
+    - 'lib/**/*.rb'
 
-Naming/VariableNumber:
-  Enabled: false
+Naming/FileName:
+  Exclude:
+    # The gem's entry point is named after the gem, as `require 'rubocop-ai'` expects.
+    - 'lib/rubocop-ai.rb'
+    # rubocop-md checks the code blocks of Markdown files as if each file were a Ruby file.
+    - '**/*.md'
 
+# rubocop-md: README snippets are illustrative, not standalone programs.
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - '**/*.md'
+
+# Sorbet signatures name every parameter, including the block, so anonymous block forwarding (`&`)
+# cannot be used in typed code.
+Naming/BlockForwarding:
+  EnforcedStyle: explicit
+
+# The cop's own documentation (its YARD example and the README) quotes, as its "bad" example, the adverb chain
+# the cop reports.
+AI/AdverbSpam:
+  Exclude:
+    - 'lib/rubocop/cop/ai/adverb_spam.rb'
+    - 'README.md'
+
+# Cop specs state each offense and its correction as two heredocs of source code; a heredoc is one
+# example input, not example logic, so it counts as one line.
+RSpec/ExampleLength:
+  CountAsOne:
+    - heredoc

@@ -5,54 +5,116 @@ on:
     tags:
       - 'v*.*.*'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+permissions: {}
+
+# Never cancel a release in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 
 jobs:
-  build_and_release:
-    runs-on: ubuntu-latest
+  # Gate the release on the full verification suite so a broken tagged commit
+  # can never ship.
+  verify:
+    name: Verify
+    runs-on: ubuntu-26.04
     permissions:
-      contents: write
-      id-token: write
-
+      contents: read
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    # No dependency cache in the release pipeline: a poisoned cache must never reach a published gem.
+    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+      with:
+        ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
+        bundler-cache: false
+    - name: Check the Ruby version
+      run: script/check_ruby.sh
+    - run: bundle install --jobs 4 --retry 3
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-w -W:deprecated -W:performance' >> "$GITHUB_ENV"
+    - run: bundle exec rake
+
+  build_and_release:
+    name: Build and release
+    needs: verify
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write # create the GitHub release and attach the gem
+      id-token: write # RubyGems trusted publishing (OIDC)
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
-    
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
+        persist-credentials: false
+
+    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
       with:
-        ruby-version: 4.0
-        bundler-cache: true
-        
-    - name: Recover Private Key for Code Signing
+        ruby-version: .ruby-version
+        rubygems: latest
+        bundler: latest
+        bundler-cache: false
+    - name: Check the Ruby version
+      run: script/check_ruby.sh
+    - run: bundle install --jobs 4 --retry 3
+    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
+    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
+    - name: Enable Ruby warnings
+      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
+
+    # Validate the tag format and require it to match the committed version.rb.
+    # The version file is the single source of truth; a mistyped tag fails loudly
+    # instead of publishing a gem whose version differs from the committed code.
+    - name: Validate tag against version.rb
+      run: |
+        TAG_NAME="${GITHUB_REF_NAME}"
+        if ! printf '%s' "$TAG_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "::error::Tag '$TAG_NAME' does not match the required vX.Y.Z format." >&2
+          exit 1
+        fi
+        VERSION="${TAG_NAME#v}"
+        FILE_VERSION="$(ruby -r ./lib/rubocop/ai/version -e 'puts RuboCop::AI::VERSION')"
+        if [ "$VERSION" != "$FILE_VERSION" ]; then
+          echo "::error::Tag version '$VERSION' does not match lib/rubocop/ai/version.rb ('$FILE_VERSION'). Update version.rb, commit, then re-tag." >&2
+          exit 1
+        fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+    - name: Recover Private Key
       env:
         GEM_PRIVATE_KEY: ${{ secrets.GEM_PRIVATE_KEY }}
       run: |
+        if [ -z "$GEM_PRIVATE_KEY" ]; then
+          echo "::error::GEM_PRIVATE_KEY secret is missing or empty; refusing to publish an unsigned gem." >&2
+          exit 1
+        fi
         mkdir -p ~/.gem
         printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem
         chmod 0600 ~/.gem/gem-private_key.pem
-        
-    - name: Extract Release Version
-      id: extract_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        
-    - name: Synchronize Version
-      run: |
-        sed -i "s/VERSION = '.*'/VERSION = '${{ env.VERSION }}'/" lib/rubocop/ai/version.rb
-        
-    - name: Build Gem
-      run: gem build rubocop-ai.gemspec
-      
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: rubocop-ai-${{ env.VERSION }}.gem
-        
-    - name: Configure RubyGems Credentials (OIDC)
-      uses: rubygems/configure-rubygems-credentials@main
 
-    - name: Publish to RubyGems
+    - run: gem build rubocop-ai.gemspec
+
+    - name: Verify the built gem is signed
       run: |
-        gem push rubocop-ai-${{ env.VERSION }}.gem
+        gem spec "rubocop-ai-${VERSION}.gem" cert_chain | grep -q 'BEGIN CERTIFICATE' || {
+          echo "::error::Built gem is not signed." >&2
+          exit 1
+        }
+
+    - name: Create the GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "$GITHUB_REF_NAME" "rubocop-ai-${VERSION}.gem" --title "$GITHUB_REF_NAME" --generate-notes
+
+    # Pinned to the v2.1.0 release SHA (credential-handling step; never track a
+    # mutable ref here).
+    - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+
+    - run: gem push "rubocop-ai-${VERSION}.gem"

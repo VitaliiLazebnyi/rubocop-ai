@@ -1,0 +1,7 @@
+# Stand-in for the gem's config/default.yml in spec/rubocop/ai/inject_spec.rb.
+AI/AdverbSpam:
+  Description: 'Fixture description.'
+  Enabled: false
+  VersionAdded: '0.1.0'
+  Exclude:
+    - 'generated/**/*'
