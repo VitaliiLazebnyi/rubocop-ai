@@ -1,20 +1,44 @@
 # Everything that is deliberately NOT at its newest release, with the exact upstream reason.
 # `rake outdated` (script/outdated.rb) fails for anything else that is outdated, and for a hold that is no
-# longer needed. Checked against rubygems.org and ruby-lang.org on 2026-10-28.
+# longer needed. Checked against rubygems.org and ruby-lang.org on 2026-11-07.
 
-# Gems held back because an upstream gemspec forbids the newest release.
+# Gems held back because an upstream gemspec forbids the newest release, or because the newest release
+# cannot be loaded without a warning.
 gems:
   diff-lcs:
     newest: 2.0.0
     blocked_by:
-      - 'rspec-expectations 3.13.5: diff-lcs >= 1.2.0, < 2.0'
-      - 'rspec-mocks 3.13.8: diff-lcs >= 1.2.0, < 2.0'
+      - 'rspec-expectations 3.13.6: diff-lcs >= 1.2.0, < 2.0'
+      - 'rspec-mocks 3.13.9: diff-lcs >= 1.2.0, < 2.0'
   prism:
     newest: 2.1.0
     blocked_by:
       - 'rubocop-ast 1.50.0: prism ~> 1.7'
       - 'flay 2.14.4: prism ~> 1.7'
       - 'rbi 0.5.0 (required by tapioca 0.20.0): prism ~> 1.0'
+  # Held by this repository (the `~> 2.0` requirement in rubocop-ai.gemspec), not by an upstream gemspec.
+  rubocop-md:
+    newest: 3.0.0
+    reason: >-
+      rubocop-md 3.0.0 parses Markdown with kramdown (~> 2.4), and kramdown 2.5.2 (the newest release) prints
+      "kramdown/parser/base.rb:60: warning: character class has duplicated range: /[\s\p{Z}]+/" when it is
+      loaded with Ruby warnings on (`-w`), which fails the warning-free run of RuboCop with every plugin
+      (spec/rubocop/ai_shipped_configuration_spec.rb) and the warning gate. The fix (kramdown commit 5a41893,
+      gettalong/kramdown#821) is not in a release yet.
+    until_newer_than:
+      kramdown: 2.5.2
+  # Held by this repository (the exact requirement in Gemfile, for the development bundle only; the gem still
+  # accepts every RuboCop >= 1.56), not by an upstream gemspec.
+  rubocop:
+    newest: 1.92.2
+    reason: >-
+      RuboCop 1.92.2 warns about obsolete configuration shipped by a plugin (rubocop/rubocop#14045), and
+      rubocop-md 2.0.4 (held above) still sets `IgnoredPatterns` for Layout/LineLength in its default.yml:
+      "Warning: obsolete configuration found in the `rubocop-md` plugin: obsolete parameter `IgnoredPatterns`
+      (for `Layout/LineLength`) ... has been renamed to `AllowedPatterns`." That fails the same warning-free run.
+      rubocop-md 3.0.0 renames the parameter, so both holds end together once kramdown is released with the fix.
+    until_newer_than:
+      kramdown: 2.5.2
 
 # Jobs that run on a Ruby other than the newest one (.ruby-version). Every other Ruby that CI names is the
 # newest patch release of a supported minor version (the test matrix covers each of them).

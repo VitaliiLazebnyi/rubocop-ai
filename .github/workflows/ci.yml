@@ -30,7 +30,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: ${{ matrix.ruby }}
         rubygems: latest
@@ -59,7 +59,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: "3.3.13"
         rubygems: latest
@@ -87,7 +87,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -113,7 +113,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -137,7 +137,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -161,7 +161,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -187,7 +187,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest
@@ -225,7 +225,7 @@ jobs:
         persist-credentials: false
 
     # Configuration: _typos.toml
-    - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b # v1.51.1
+    - uses: crate-ci/typos@4c8b7f51ca60df14e3c5ca82770dfbbe6c3dae85 # v1.52.0
 
   build:
     name: Build gem
@@ -237,7 +237,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: .ruby-version
         rubygems: latest

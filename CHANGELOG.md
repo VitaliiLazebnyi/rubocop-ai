@@ -24,3 +24,5 @@ All notable changes to this project are documented in this file. The format foll
   (`load_yaml_configuration`, `merge_with_default` and `default_configuration=`) instead of a private
   method call and an instance-variable write.
 - Releases are published only from a tag that matches `RuboCop::AI::VERSION`.
+- The development toolchain and the CI actions are updated to their newest releases (runtime requirements are
+  unchanged).

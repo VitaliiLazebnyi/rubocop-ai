@@ -38,6 +38,14 @@ end
   failures << "OUTDATED: #{name} #{installed} -> #{newest}" unless installed == newest
 end
 
+# A gem hold that waits for a release of another gem is re-examined as soon as that gem has a new release.
+gem_holds.each do |held_gem, hold|
+  hold.fetch('until_newer_than', {}).each do |name, held|
+    newest = newest_gem(name)
+    failures << "STALE HOLD #{held_gem}: #{name} #{newest} is newer than #{held}; re-check the reason" if newest != held
+  end
+end
+
 # --- Ruby ---
 index = Net::HTTP.get(URI('https://cache.ruby-lang.org/pub/ruby/index.txt')).to_s
 releases = index.scan(/^ruby-(\d+\.\d+\.\d+)\t/).map { |(version)| Gem::Version.new(version) }

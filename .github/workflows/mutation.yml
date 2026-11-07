@@ -32,7 +32,7 @@ jobs:
     # 3.3.13.0 only has grammars up to Ruby 3.3, so on Ruby 3.4 and 4.0 it prints warnings. Mutation testing
     # runs on Ruby 3.3.13, the newest patch of the oldest supported Ruby, which the test matrix also covers.
     # `rake outdated` fails as soon as a newer mutant or parser is released, to re-check this hold.
-    - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: "3.3.13"
         rubygems: latest
