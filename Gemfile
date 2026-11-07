@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Vitalii Lazebnyi
 # frozen_string_literal: true
 
 source 'https://rubygems.org'

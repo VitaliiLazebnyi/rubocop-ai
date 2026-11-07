@@ -1,0 +1,3 @@
+# ShellCheck at its strictest: every optional check (script/check also passes --enable=all --severity=style). No
+# check is switched off, here or inline (script/forbidden_suppressions.sh).
+enable=all

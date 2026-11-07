@@ -8,7 +8,6 @@
 /.bundle/
 /vendor/bundle/
 /vendor/ruby/
-Gemfile.lock
 
 # Logs and Output
 /log/*

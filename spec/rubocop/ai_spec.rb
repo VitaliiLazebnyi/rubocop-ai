@@ -1,22 +1,23 @@
+# Copyright (c) 2026 Vitalii Lazebnyi
 # typed: false
 # frozen_string_literal: true
 
 require 'yaml'
 
-RSpec.describe RuboCop::AI do
+RSpec.describe(RuboCop::AI) do
   describe '.project_root' do
     it 'is the absolute directory that holds the gemspec and the configuration of the gem' do
       root = described_class.project_root
 
       contents = %w[rubocop-ai.gemspec config/default.yml].map { |file| File.file?(File.join(root, file)) }
 
-      expect([root, *contents]).to eq([File.expand_path('../..', __dir__), true, true])
+      expect([root, *contents]).to(eq([File.expand_path('../..', __dir__), true, true]))
     end
   end
 
   describe 'VERSION' do
     it 'is a semantic version' do
-      expect(described_class::VERSION).to match(/\A\d+\.\d+\.\d+\z/)
+      expect(described_class::VERSION).to(match(/\A\d+\.\d+\.\d+\z/))
     end
   end
 
@@ -30,22 +31,27 @@ RSpec.describe RuboCop::AI do
     end
 
     it 'refuses to publish a tag that differs from the committed version' do
-      expect(validate_step['run']).to include('RuboCop::AI::VERSION', '"$VERSION" != "$FILE_VERSION"')
+      expect(validate_step['run']).to(include('RuboCop::AI::VERSION', '[[ "${VERSION}" == "${FILE_VERSION}" ]] ||'))
     end
   end
 
   describe 'the gemspec', bug: 'BUG-RB-005' do
     let(:specification) { Gem::Specification.load(File.join(described_class.project_root, 'rubocop-ai.gemspec')) }
 
-    it 'links a changelog that exists in the repository and ships with the gem' do
-      changelog = specification.metadata.fetch('changelog_uri').delete_prefix("#{specification.homepage}/blob/main/")
+    let(:changelog) do
+      specification.metadata.fetch('changelog_uri').delete_prefix("#{specification.homepage}/blob/main/")
+    end
 
-      expect([File.file?(File.join(described_class.project_root, changelog)),
-              specification.files.include?(changelog)]).to eq([true, true])
+    it 'links a changelog that exists in the repository' do
+      expect(File.file?(File.join(described_class.project_root, changelog))).to(be(true))
+    end
+
+    it 'ships the changelog it links' do
+      expect(specification.files).to(include(changelog))
     end
 
     it 'ships the configuration that RuboCop loads' do
-      expect(specification.files).to include('config/default.yml', 'lib/rubocop-ai.rb')
+      expect(specification.files).to(include('config/default.yml', 'lib/rubocop-ai.rb'))
     end
   end
 end

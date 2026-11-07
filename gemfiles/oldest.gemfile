@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Vitalii Lazebnyi
 # frozen_string_literal: true
 
 # The oldest RuboCop release that rubocop-ai.gemspec accepts. CI runs the cop, the configuration injection
@@ -7,9 +8,14 @@
 # oldest 0.5 releases, so the suite cannot run against them.
 source 'https://rubygems.org'
 
+# The oldest RuboCop release the gem supports.
 gem 'rubocop', '1.56.0'
+# The gem itself, from this checkout.
 gem 'rubocop-ai', path: '..'
 
+# The test suite: RSpec, and SimpleCov with its AI-readable report (see spec/spec_helper.rb).
 gem 'rspec', '~> 3.13'
+# Line and branch coverage.
 gem 'simplecov', '~> 1.3'
+# The coverage report for AI agents.
 gem 'simplecov-ai', '~> 0.11'

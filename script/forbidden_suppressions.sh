@@ -5,18 +5,19 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# This script names the patterns, and CONTRIBUTING.md and gem_practices_guide.md document the rules, so they
-# are not scanned for them. The generated gem RBIs (if present) are not part of the repository.
+# This script names the patterns, and CONTRIBUTING.md and gem_practices_guide.md document the rules, so they are not
+# scanned for them. The generated gem RBIs (if present) are not part of the repository.
 files=$(git ls-files -z -- . ':(exclude)script/forbidden_suppressions.sh' ':(exclude)CONTRIBUTING.md' \
   ':(exclude)gem_practices_guide.md' ':(exclude)sorbet/rbi/gems' | tr '\0' '\n')
+readonly files
 
 status=0
 check() {
-  local description=$1 pattern=$2 scope=${3:-.}
+  local description=${1} pattern=${2} scope=${3:-.}
   local hits
-  hits=$(printf '%s\n' "$files" | grep -E "^${scope}" | xargs -r grep -nEH -e "$pattern" -- || true)
-  if [ -n "$hits" ]; then
-    printf 'Forbidden (%s):\n%s\n\n' "$description" "$hits"
+  hits=$(printf '%s\n' "${files}" | grep -E "^${scope}" | xargs -r grep -nEH -e "${pattern}" -- || true)
+  if [[ -n ${hits} ]]; then
+    printf 'Forbidden (%s):\n%s\n\n' "${description}" "${hits}"
     status=1
   fi
 }
@@ -28,16 +29,20 @@ check 'SimpleCov exclusion' ':nocov:|nocov_token'
 check 'mutant suppression' 'mutant:disable'
 check 'gitleaks allow' 'gitleaks:allow'
 check 'zizmor ignore' 'zizmor: ?ignore'
-check 'shellcheck disable' 'shellcheck +disable'
-check 'markdownlint disable' 'markdownlint-(disable|capture|configure-file)'
+check 'ShellCheck disable' 'shellcheck +disable'
+check 'Markdown lint disable' '(markdownlint|rumdl)-(disable|capture|configure-file)'
+check 'yamllint disable' 'yamllint +disable'
+check 'editorconfig-checker disable' 'editorconfig-checker-disable'
 check 'typos ignore' 'typos: ?(ignore|off)|spellchecker: ?(disable|ignore)'
 check 'LGTM/CodeQL suppression' 'lgtm\[|codeql\[|codeql-disable|lgtm: ?ignore'
 check 'nosec' 'nosec'
 check 'warning silencing' '[$]VERBOSE *= *(nil|false)|Warning\.ignore|Warning\[:[a-z_]+\] *= *false|silence_warnings|[$]stderr *= *File::NULL|RUBYOPT=.*-W0| -W0\b'
 check 'Sorbet runtime check silencing' 'T::Configuration\.[a-z_]*(handler|checks?)[a-z_]* *='
 check 'skipped or focused test' '^[[:space:]]*([xf](it|describe|context|specify|example)|skip|pending)([[:space:]]|\()|focus: *true|, *:focus|, *(skip|pending): ' '(spec|script)/'
-# lib/ is `typed: strong`; spec files are `typed: false` because the RSpec DSL cannot be typed without T.bind.
+# lib/ is `typed: strong`; every other Ruby file is `typed: strict`, except the RSpec example files (`typed: false`,
+# see Sorbet/StrictSigil in .rubocop.yml).
 check 'Sorbet escape hatch' 'T\.(unsafe|cast|bind|untyped)\b|typed: *(ignore|false|true|strict)\b' 'lib/'
+check 'Sorbet escape hatch' 'T\.(unsafe|cast|bind|untyped)\b' '(script|spec|sorbet)/'
 check 'Sorbet sigil that skips the file' 'typed: *ignore\b'
 
-exit "$status"
+exit "${status}"

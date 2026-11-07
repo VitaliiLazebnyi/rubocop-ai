@@ -1,4 +1,5 @@
-# typed: true
+# Copyright (c) 2026 Vitalii Lazebnyi
+# typed: strict
 # frozen_string_literal: true
 
 # RuboCop's RSpec helpers (RuboCop::RSpec::ExpectOffense, ...) are not loaded by `require 'rubocop'`.

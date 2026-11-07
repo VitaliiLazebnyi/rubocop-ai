@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Vitalii Lazebnyi
 # frozen_string_literal: true
 
 require_relative 'lib/rubocop/ai/version'
@@ -10,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'RuboCop extensions for broken AI-generated comments detection.'
   spec.description   = 'A RuboCop extension aimed at detecting and remediating boilerplate, spam, ' \
-                       'or AI-hallucinated artifacts across codebases.'
+    'or AI-hallucinated artifacts across codebases.'
   spec.homepage      = 'https://github.com/VitaliiLazebnyi/rubocop-ai'
   spec.license       = 'MIT'
 
@@ -38,38 +39,43 @@ Gem::Specification.new do |spec|
   # Core runtime dependencies.
   # RuboCop 1.56 is the oldest release CI runs the suite against (gemfiles/oldest.gemfile): older releases load
   # base64 from the standard library, which Ruby warns about on 3.3 and no longer ships as a default gem from 3.4.
-  spec.add_dependency 'rubocop', '>= 1.56'
-  spec.add_dependency 'sorbet-runtime', '>= 0.5'
+  spec.add_dependency('rubocop', '>= 1.56')
+  spec.add_dependency('sorbet-runtime', '>= 0.5')
 
   # Test suite.
-  spec.add_development_dependency 'rspec', '~> 3.13'
-  spec.add_development_dependency 'simplecov', '~> 1.3'
-  spec.add_development_dependency 'simplecov-ai', '~> 0.11'
+  spec.add_development_dependency('rspec', '~> 3.13')
+  spec.add_development_dependency('simplecov', '~> 1.3')
+  spec.add_development_dependency('simplecov-ai', '~> 0.11')
 
   # Quality tooling (linting, typing, documentation, mutation testing, dependency audit).
   # Fails the build on dependencies with known vulnerabilities.
-  spec.add_development_dependency 'bundler-audit', '~> 0.9'
+  spec.add_development_dependency('bundler-audit', '~> 0.9')
+  # Methods that nothing calls.
+  spec.add_development_dependency('debride', '~> 1.15')
   # Structural duplication detection.
-  spec.add_development_dependency 'flay', '~> 2.14'
+  spec.add_development_dependency('flay', '~> 2.14')
+  # Method complexity.
+  spec.add_development_dependency('flog', '~> 4.9')
   # Mutation testing (free for open source via `usage: opensource`).
-  spec.add_development_dependency 'mutant-rspec', '~> 0.17'
+  spec.add_development_dependency('mutant-rspec', '~> 0.17')
   # Code smell detection.
-  spec.add_development_dependency 'reek', '~> 6.6'
+  spec.add_development_dependency('reek', '~> 6.6')
   # Rake tasks.
-  spec.add_development_dependency 'rake', '~> 13.4'
+  spec.add_development_dependency('rake', '~> 13.4')
   # Linter plugins (RuboCop itself is a runtime dependency).
   # HOLD (script/outdated_holds.yml): rubocop-md 3.0 loads kramdown 2.5.2, which prints a Ruby warning.
-  spec.add_development_dependency 'rubocop-md', '~> 2.0'
-  spec.add_development_dependency 'rubocop-performance', '~> 1.27'
-  spec.add_development_dependency 'rubocop-rake', '~> 0.7'
-  spec.add_development_dependency 'rubocop-rspec', '~> 3.10'
-  spec.add_development_dependency 'rubocop-sorbet', '~> 0.17'
-  spec.add_development_dependency 'rubocop-thread_safety', '~> 0.8'
+  spec.add_development_dependency('rubocop-md', '~> 2.0')
+  spec.add_development_dependency('rubocop-packaging', '~> 0.6')
+  spec.add_development_dependency('rubocop-performance', '~> 1.27')
+  spec.add_development_dependency('rubocop-rake', '~> 0.7')
+  spec.add_development_dependency('rubocop-rspec', '~> 3.10')
+  spec.add_development_dependency('rubocop-sorbet', '~> 0.17')
+  spec.add_development_dependency('rubocop-thread_safety', '~> 0.8')
   # Static type checker.
-  spec.add_development_dependency 'sorbet', '~> 0.6'
+  spec.add_development_dependency('sorbet', '~> 0.6')
   # Generates the RBI files of the dependencies that Sorbet checks against (`rake typecheck`).
-  spec.add_development_dependency 'tapioca', '~> 0.20'
+  spec.add_development_dependency('tapioca', '~> 0.20')
   # API documentation (must stay 100% documented) and its Sorbet plugin.
-  spec.add_development_dependency 'yard', '~> 0.9'
-  spec.add_development_dependency 'yard-sorbet', '~> 0.9'
+  spec.add_development_dependency('yard', '~> 0.9')
+  spec.add_development_dependency('yard-sorbet', '~> 0.9')
 end

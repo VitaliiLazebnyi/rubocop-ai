@@ -1,120 +1,185 @@
-name: Automated Release
-
-on:
-  push:
-    tags:
-      - 'v*.*.*'
-
-permissions: {}
-
+---
 # Never cancel a release in flight.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
-
-
+  group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
-  # Gate the release on the full verification suite so a broken tagged commit
-  # can never ship.
-  verify:
-    name: Verify
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: read
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        persist-credentials: false
-
-    # No dependency cache in the release pipeline: a poisoned cache must never reach a published gem.
-    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
-      with:
-        ruby-version: .ruby-version
-        rubygems: latest
-        bundler: latest
-        bundler-cache: false
-    - name: Check the Ruby version
-      run: script/check_ruby.sh
-    - run: bundle install --jobs 4 --retry 3
-    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
-    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
-    - name: Enable Ruby warnings
-      run: echo 'RUBYOPT=-w -W:deprecated -W:performance' >> "$GITHUB_ENV"
-    - run: bundle exec rake
-
   build_and_release:
+    env:
+      RUBYOPT: -w -W:deprecated -W:performance
+    # The signing key and the RubyGems trusted publisher are only available to this environment, which only
+    # release tags can deploy to.
+    environment: release
     name: Build and release
-    needs: verify
-    runs-on: ubuntu-26.04
+    needs: [verify, warning-gate-verify]
     permissions:
       contents: write # create the GitHub release and attach the gem
       id-token: write # RubyGems trusted publishing (OIDC)
+    runs-on: ubuntu-26.04
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        fetch-depth: 0
-        persist-credentials: false
+      - name: Harden the runner (egress allowed only to the endpoints below)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          allowed-endpoints: >-
+            *.actions.githubusercontent.com:443
+            api.github.com:443
+            github.com:443
+            index.rubygems.org:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            rubygems.org:443
+            uploads.github.com:443
+          disable-sudo-and-containers: true
+          egress-policy: block
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # RubyGems itself prints Ruby warnings while setup-ruby installs it, so it runs without them.
+      - env:
+          RUBYOPT: ""
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          bundler: latest
+          bundler-cache: false
+          ruby-version: .ruby-version
+          rubygems: latest
+      - name: Check the Ruby version
+        run: script/check_ruby.sh
 
-    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
-      with:
-        ruby-version: .ruby-version
-        rubygems: latest
-        bundler: latest
-        bundler-cache: false
-    - name: Check the Ruby version
-      run: script/check_ruby.sh
-    - run: bundle install --jobs 4 --retry 3
-    # Ruby warnings are enabled after the toolchain is installed: RubyGems itself warns while
-    # setup-ruby installs the bundle with them on. Every later step, and everything it runs, has them.
-    - name: Enable Ruby warnings
-      run: echo 'RUBYOPT=-W:deprecated -W:performance' >> "$GITHUB_ENV"
+      # Validate the tag format and require it to match the committed version.rb. The version file is the single
+      # source of truth; a mistyped tag fails loudly instead of publishing a gem whose version differs from the
+      # committed code.
+      - name: Validate tag against version.rb
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="$(ruby -r ./lib/rubocop/ai/version -e 'puts RuboCop::AI::VERSION')"
+          pattern='^v[0-9]+\.[0-9]+\.[0-9]+$'
+          [[ "${GITHUB_REF_NAME}" =~ ${pattern} ]] || { echo "::error::The tag is not vX.Y.Z." >&2; exit 1; }
+          [[ "${VERSION}" == "${FILE_VERSION}" ]] || { echo "::error::version.rb is ${FILE_VERSION}." >&2; exit 1; }
+          echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
 
-    # Validate the tag format and require it to match the committed version.rb.
-    # The version file is the single source of truth; a mistyped tag fails loudly
-    # instead of publishing a gem whose version differs from the committed code.
-    - name: Validate tag against version.rb
-      run: |
-        TAG_NAME="${GITHUB_REF_NAME}"
-        if ! printf '%s' "$TAG_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-          echo "::error::Tag '$TAG_NAME' does not match the required vX.Y.Z format." >&2
-          exit 1
-        fi
-        VERSION="${TAG_NAME#v}"
-        FILE_VERSION="$(ruby -r ./lib/rubocop/ai/version -e 'puts RuboCop::AI::VERSION')"
-        if [ "$VERSION" != "$FILE_VERSION" ]; then
-          echo "::error::Tag version '$VERSION' does not match lib/rubocop/ai/version.rb ('$FILE_VERSION'). Update version.rb, commit, then re-tag." >&2
-          exit 1
-        fi
-        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+      - env:
+          GEM_PRIVATE_KEY: ${{ secrets.GEM_PRIVATE_KEY }}
+        name: Recover Private Key
+        run: |
+          [[ -n "${GEM_PRIVATE_KEY}" ]] || { echo "::error::GEM_PRIVATE_KEY is empty." >&2; exit 1; }
+          mkdir -p ~/.gem
+          printf '%s\n' "${GEM_PRIVATE_KEY}" > ~/.gem/gem-private_key.pem
+          chmod 0600 ~/.gem/gem-private_key.pem
 
-    - name: Recover Private Key
-      env:
-        GEM_PRIVATE_KEY: ${{ secrets.GEM_PRIVATE_KEY }}
-      run: |
-        if [ -z "$GEM_PRIVATE_KEY" ]; then
-          echo "::error::GEM_PRIVATE_KEY secret is missing or empty; refusing to publish an unsigned gem." >&2
-          exit 1
-        fi
-        mkdir -p ~/.gem
-        printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem
-        chmod 0600 ~/.gem/gem-private_key.pem
+      - run: gem build --strict rubocop-ai.gemspec
 
-    - run: gem build rubocop-ai.gemspec
+      - name: Verify the built gem is signed
+        run: gem spec "rubocop-ai-${VERSION}.gem" cert_chain | grep -q 'BEGIN CERTIFICATE'
 
-    - name: Verify the built gem is signed
-      run: |
-        gem spec "rubocop-ai-${VERSION}.gem" cert_chain | grep -q 'BEGIN CERTIFICATE' || {
-          echo "::error::Built gem is not signed." >&2
-          exit 1
-        }
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        name: Create the GitHub release
+        run: >-
+          gh release create "${GITHUB_REF_NAME}" "rubocop-ai-${VERSION}.gem" --generate-notes
+          --title "${GITHUB_REF_NAME}"
 
-    - name: Create the GitHub release
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: gh release create "$GITHUB_REF_NAME" "rubocop-ai-${VERSION}.gem" --title "$GITHUB_REF_NAME" --generate-notes
+      # Pinned to the release commit (credential-handling step; never track a mutable ref here).
+      - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
 
-    # Pinned to the v2.1.0 release SHA (credential-handling step; never track a
-    # mutable ref here).
-    - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+      - run: gem push "rubocop-ai-${VERSION}.gem"
+    timeout-minutes: 15
 
-    - run: gem push "rubocop-ai-${VERSION}.gem"
+  # Gate the release on the verification suite, so that a broken tagged commit can never ship.
+  verify:
+    name: Verify
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden the runner (egress allowed only to the endpoints below)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          allowed-endpoints: >-
+            api.github.com:443
+            github.com:443
+            index.rubygems.org:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            rubygems.org:443
+          disable-sudo-and-containers: true
+          egress-policy: block
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # No dependency cache in the release pipeline: a poisoned cache must never reach a published gem.
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          bundler: latest
+          bundler-cache: false
+          ruby-version: .ruby-version
+          rubygems: latest
+      - name: Check the Ruby version
+        run: script/check_ruby.sh
+      - run: bundle install --jobs 4 --retry 3
+      - run: script/check suppressions rubocop spec typecheck yard reek flay flog debride audit package
+    timeout-minutes: 30
+
+  warning-gate:
+    if: ${{ !cancelled() }}
+    name: Warning gate (release)
+    needs: [build_and_release]
+    permissions:
+      actions: read # reads the logs of the other jobs of this run
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden the runner (egress allowed only to the endpoints below)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          allowed-endpoints: >-
+            *.actions.githubusercontent.com:443
+            *.blob.core.windows.net:443
+            api.github.com:443
+            github.com:443
+          disable-sudo-and-containers: true
+          egress-policy: block
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        name: Fail on any warning or deprecation in the logs of this run
+        run: script/warning_gate.sh
+    timeout-minutes: 10
+
+  warning-gate-verify:
+    if: ${{ !cancelled() }}
+    name: Warning gate (verify)
+    needs: [verify]
+    permissions:
+      actions: read # reads the logs of the other jobs of this run
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden the runner (egress allowed only to the endpoints below)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          allowed-endpoints: >-
+            *.actions.githubusercontent.com:443
+            *.blob.core.windows.net:443
+            api.github.com:443
+            github.com:443
+          disable-sudo-and-containers: true
+          egress-policy: block
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        name: Fail on any warning or deprecation in the logs of this run
+        run: script/warning_gate.sh
+    timeout-minutes: 10
+name: Automated Release
+"on":
+  push:
+    tags:
+      - v*.*.*
+# Nothing is writable by default; every job declares the permissions it needs.
+permissions: {}

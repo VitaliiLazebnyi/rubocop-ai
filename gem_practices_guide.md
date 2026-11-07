@@ -1,10 +1,10 @@
-# Ruby Gem Development Practices & Configuration Guide
+# Ruby gem development practices and configuration guide
 
 This document captures the best practices, architectural approaches, and configurations utilized in modern, high-quality
 Ruby gems (such as `http_loader`). It serves as a blueprint for AI agents and developers building resilient,
 well-tested, securely-released, and strictly-typed Ruby gems.
 
-## 1. Static Type Checking with Sorbet
+## Static type checking with Sorbet
 
 The project leverages [Sorbet](https://sorbet.org/) for robust, static type checking.
 
@@ -16,9 +16,9 @@ The project leverages [Sorbet](https://sorbet.org/) for robust, static type chec
   comprehensive type safety.
 - **Runtime Checks Stay On**: The specs never replace `T::Configuration`'s error handlers. A signature that rejects a
   value the code really receives is a bug in the signature; a test that passes an invalid value asserts the `TypeError`
-  that sorbet-runtime raises.
+  that `sorbet-runtime` raises.
 
-## 2. Code Quality & Linting (RuboCop)
+## Code quality and linting (RuboCop)
 
 The codebase implements strict coding standards through RuboCop, leveraging several specialized plugins beyond the
 default rule set.
@@ -60,27 +60,28 @@ RuboCop::ConfigLoader.default_configuration = RuboCop::Config.new(default.merge(
     files). For rule adjustments, utilize supported configuration parameters (e.g., `EnforcedStyle: gemspec` for
     `Gemspec/DevelopmentDependencies`) rather than silencing cops.
 
-## 3. RSpec Testing Suite
+## RSpec test suite
 
-1. **RSpec Configuration** (`.rspec`):
-   - Execution is randomized (`--order random`) to expose state bleed between tests.
-   - Profiling is enabled (`--profile 10`) to identify the top 10 slowest executing tests continuously.
-2. **Coverage mandates (SimpleCov)**:
-   - Initialized in `spec_helper.rb`, setting `enable_coverage :branch` mapping all tested code.
-   - **Strict 100% Coverage**: 100% logic and branch test coverage is rigorously mandated.
-   - **No Exemptions**: The codebase strictly forbids the use of coverage-dodging exception directives (e.g.,
-     `# rubocop:disable`, `# type: ignore`, `# pragma: no cover`) to artificially inflate coverage metrics. All tests
-     must verify real state changes.
-3. **Mocks and Expectations**:
-   - `verify_partial_doubles = true` ensures that when mocking an object, it accurately implements the original
-     object's signature preventing "mock drift".
+- **RSpec Configuration** (`.rspec`):
+  - Execution is randomized (`--order random`) to expose state bleed between tests.
+  - Profiling is enabled (`--profile 10`) to identify the top 10 slowest executing tests continuously.
+- **Coverage mandates (SimpleCov)**:
+  - Initialized in `spec_helper.rb`, setting `enable_coverage :branch` mapping all tested code.
+  - **Strict 100% Coverage**: 100% logic and branch test coverage is rigorously mandated.
+  - **No Exemptions**: The codebase strictly forbids the use of coverage-dodging exception directives (e.g.,
+    `# rubocop:disable`, `# type: ignore`, `# pragma: no cover`) to artificially inflate coverage metrics. All tests
+    must verify real state changes.
+- **Mocks and Expectations**:
+  - `verify_partial_doubles = true` ensures that when mocking an object, it accurately implements the original
+    object's signature preventing "mock drift".
 
-## 4. Documentation (YARD)
+## Documentation (YARD)
 
 YARD heavily drives code discoverability and API usability.
 
 - **Configuration** (`.yardopts`):
-  - Configures the output format as markdown (`--markup markdown`).
+  - Configures the markup of the documentation comments as RDoc (`--markup rdoc`), rendered by RDoc
+    (`--markup-provider rdoc`).
   - Instructs YARD to utilize the `sorbet` plugin (`--plugin sorbet`) so Sorbet signatures are automatically ingested
     into documentation metadata.
 - **Enforcement**:
@@ -89,7 +90,7 @@ YARD heavily drives code discoverability and API usability.
     (e.g., `grep -q "100.00% documented"`) to strictly fail the build and block the release if any public class, module,
     or method lacks inline documentation.
 
-## 5. Security: Gem Code Signing and Certificates
+## Security: gem code signing and certificates
 
 Cryptographic signing ensures end-to-end security and integrity verification of the published `.gem` artifacts.
 
@@ -106,9 +107,9 @@ spec.signing_key = private_key_path if File.exist?(private_key_path) && File.siz
 - The private key is securely stored in CI secrets and dynamically evaluated. It prevents the local `gem build` from
   failing for developers who do not possess the private key.
 
-## 6. Continuous Integration & Delivery (GitHub Actions)
+## Continuous integration and delivery (GitHub Actions)
 
-### CI Verification Pipeline (`ci.yml`)
+### CI verification pipeline (`ci.yml`)
 
 The workflow operates on every push/PR against a matrix. To maximize bandwidth and minimize feedback loops, verification
 checks must be partitioned into independent parallel jobs (e.g., `lint`, `test`, `typecheck`, `docs`, `build`) rather
@@ -145,25 +146,25 @@ jobs:
   # pinned to the highest Ruby version (e.g. ruby: ["4.0"])
 ```
 
-1. **Target Matrix Execution**: Runtime execution paths (specifically `test`, which exercises runtime logic including
-   `sorbet-runtime`) must be tested against a full matrix of officially supported Ruby versions (e.g.,
-   `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility across environments. Conversely, static
-   checks and builds (`lint`, `typecheck`, `docs`, `build`) are environment-independent. Static typecheckers (`srb tc`)
-   parse the syntax tree deterministically without relying on the underlying Ruby runtime. Thus, these static checks
-   should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute
-   bandwidth.
-2. **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g.,
-   `actions/checkout@v6`, `ruby/setup-ruby@v1`). Actions MUST run natively on Node 24 (or newer) to prevent GitHub
-   runner deprecation warnings caused by legacy environments (e.g., Node 20).
-3. **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
-4. **Linting**: `bundle exec rubocop`
-5. **Testing**: `bundle exec rspec`
-6. **Typing**: `bundle exec srb tc --typed strong`
-7. **Documentation**: Build YARD and run `yard stats --list-undoc`, ensuring the pipeline explicitly checks the output
-   for `100.00% documented` to securely fail on missing documentation.
-8. **Integrity checks**: Validating gem builds locally (`gem build`).
+- **Target Matrix Execution**: Runtime execution paths (specifically `test`, which exercises runtime logic including
+  `sorbet-runtime`) must be tested against a full matrix of officially supported Ruby versions (e.g.,
+  `ruby: ["2.7", "3.2", "3.3", "4.0"]`) to guarantee backward compatibility across environments. Conversely, static
+  checks and builds (`lint`, `typecheck`, `docs`, `build`) are environment-independent. Static typecheckers (`srb tc`)
+  parse the syntax tree deterministically without relying on the underlying Ruby runtime. Thus, these static checks
+  should be strictly pinned to the highest supported Ruby version (e.g., `ruby: ["4.0"]`) to conserve CI compute
+  bandwidth.
+- **Modern Action Tools**: Always utilize up-to-date, pinned major versions for core actions (e.g.,
+  `actions/checkout@v6`, `ruby/setup-ruby@v1`). Actions MUST run natively on Node 24 (or newer) to prevent GitHub
+  runner deprecation warnings caused by legacy environments (e.g., Node 20).
+- **Fast Dependency Tracking**: Setup Ruby and aggressively cache dependencies natively via `bundler-cache: true`.
+- **Linting**: `bundle exec rubocop`
+- **Testing**: `bundle exec rspec`
+- **Typing**: `bundle exec srb tc --typed strong`
+- **Documentation**: Build YARD and run `yard stats --list-undoc`, ensuring the pipeline explicitly checks the output
+  for `100.00% documented` to securely fail on missing documentation.
+- **Integrity checks**: Validating gem builds locally (`gem build`).
 
-### Automated Secure Releases (`release.yml`)
+### Automated secure releases (`release.yml`)
 
 Initiated upon semantic version tagging (`v*.*.*`).
 
@@ -220,76 +221,76 @@ jobs:
     - run: gem push rubocop-ai-${{ env.VERSION }}.gem
 ```
 
-1. **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly
-   from the git tag. Because this alters the git working tree, it explicitly breaks tools that require a "clean"
-   repository (such as `rake release`).
-2. **Key Inject**: Reconstructs the code-signing private key `gem-private_key.pem` through GitHub Secrets.
-   **Crucially**, multi-line certificates MUST be injected via environment variables (`env: GEM_PRIVATE_KEY`) and
-   written via `printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem`. Using standard `echo` interpolations
-   will flatten line breaks, corrupting the key and causing `OpenSSL::PKey::PKeyError`.
-3. **Release deployment**: Pushes the manually compiled `.gem` artifact to GitHub Releases.
-4. **Registry Push (RubyGems)**: Avoid high-level wrapper actions (like `rubygems/release-gem`) which implicitly
-   enforce `bundle exec rake release` standards (requiring an explicit `Rakefile` and a perfectly clean git tree).
-   Instead, leverage `rubygems/configure-rubygems-credentials` to securely initialize OIDC Trusted Publishing (or
-   fallback to `RUBYGEMS_API_KEY` secret), then execute a direct `gem push` on the built artifact. Note: if it's the
-   very first time publishing the gem, a "Pending Trusted Publisher" MUST be created on RubyGems.org beforehand, as
-   `GEM_PRIVATE_KEY` is only for local signing and provides zero network authorization.
+- **Version synchronisation**: Dynamically replaces the static version string in `lib/.../version.rb` mapped directly
+  from the git tag. Because this alters the git working tree, it explicitly breaks tools that require a "clean"
+  repository (such as `rake release`).
+- **Key Inject**: Reconstructs the code-signing private key `gem-private_key.pem` through GitHub Secrets.
+  **Crucially**, multi-line certificates MUST be injected via environment variables (`env: GEM_PRIVATE_KEY`) and
+  written via `printf '%s\n' "$GEM_PRIVATE_KEY" > ~/.gem/gem-private_key.pem`. Using standard `echo` interpolations
+  will flatten line breaks, corrupting the key and causing `OpenSSL::PKey::PKeyError`.
+- **Release deployment**: Pushes the manually compiled `.gem` artifact to GitHub Releases.
+- **Registry Push (RubyGems)**: Avoid high-level wrapper actions (like `rubygems/release-gem`) which implicitly
+  enforce `bundle exec rake release` standards (requiring an explicit `Rakefile` and a perfectly clean git tree).
+  Instead, leverage `rubygems/configure-rubygems-credentials` to securely initialize OIDC Trusted Publishing (or
+  fallback to `RUBYGEMS_API_KEY` secret), then execute a direct `gem push` on the built artifact. Note: if it's the
+  very first time publishing the gem, a "Pending Trusted Publisher" MUST be created on RubyGems.org beforehand, as
+  `GEM_PRIVATE_KEY` is only for local signing and provides zero network authorization.
 
-## 7. Reliability & Architecture Guidelines (Best Practices)
+## Reliability and architecture guidelines
 
 To make a Ruby project strictly resilient and reliable:
 
-1. **Segregation of Intent**:
-   - Dedicate `REQUIREMENTS.md` representing current active specifications uniquely tagged (e.g., `CORE-REQ-001`).
-   - Catalog defects explicitly in `BUGS.md` decoupled from standard development tasks.
-2. **Immutability First**: Default to `# frozen_string_literal: true`. Never map values loosely.
-3. **Fail-Fast Error Handling**: Throw explicit custom library exceptions inside domain boundaries rather than
-   propagating StandardError out un-handled.
-4. **Hermetic Testing**: Utilize clock freezes, deterministic PRNGs, and exact mock borders. Never execute network
-   commands in RSpec suites.
-5. **Absolute Thread Safety**: When writing multi-concurrency code in Ruby, utilize `Mutex` heavily, avoid mutating
-   class-level/global state variables, and leverage `rubocop-thread_safety` analyzers strictly.
+- **Segregation of Intent**:
+  - Dedicate `REQUIREMENTS.md` representing current active specifications uniquely tagged (e.g., `CORE-REQ-001`).
+  - Catalog defects explicitly in `BUGS.md` decoupled from standard development tasks.
+- **Immutability First**: Default to `# frozen_string_literal: true`. Never map values loosely.
+- **Fail-Fast Error Handling**: Throw explicit custom library exceptions inside domain boundaries rather than
+  propagating StandardError out un-handled.
+- **Hermetic Testing**: Utilize clock freezes, deterministic PRNGs, and exact mock borders. Never execute network
+  commands in RSpec suites.
+- **Absolute Thread Safety**: When writing multi-concurrency code in Ruby, utilize `Mutex` heavily, avoid mutating
+  class-level/global state variables, and leverage `rubocop-thread_safety` analyzers strictly.
 
-## 8. Environment & Dependency Management
+## Environment and dependency management
 
 Establishing reproducible development environments relies on explicitly defined configurations:
 
-1. **Ruby Versioning**: **Always target the latest available Ruby version.** Track the exact Ruby version using a
-   `.ruby-version` file to ensure parity between developer machines and CI contexts. Modern toolchains (like `mise` or
-   `rbenv`) naturally ingest this.
-2. **Dependency Pinning (Gemspec vs. Gemfile)**:
-   - For reusable generic libraries (gems), do NOT commit `Gemfile.lock` to version control. This ensures CI pipelines
-     resolve the appropriate, environment-compatible dependencies during multi-version matrix tests.
-   - Maintain all dependencies (runtime and development) strictly within the `gemspec`. The `Gemfile` should only
-     contain `gemspec`.
-   - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if
-     there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling
-     like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
-3. **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on
-   native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs,config}/**/*')`) to ensure the gem can be successfully built in
-   environments without a `.git` directory or git executable.
-   - **Configuration Exposure Requirement**: If the gem is a plugin or actively distributes configuration defaults
-     (e.g., RuboCop extensions needing `config/default.yml`), it is critical to explicitly append `config` (or the
-     relative metadata directory) to the `Dir.glob` definition. Failure to do so will compile a valid-looking package
-     that silently omits critical configuration structures, leading to file-not-found exceptions upon production
-     install.
-4. **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing
-   `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle
-   encoding failures across distributed platforms.
-5. **Version Control Ignore Policies (`.gitignore`)**: Safely partition exclusion files utilizing explicitly commented
-   boundary sections: OS / Editor artifacts, Ruby / Bundler extractions (`*.gem`, `vendor/`), Logs and Output, Coverage
-   caches, YARD document generation caches (`.yardoc/`), and general transient formats (e.g. `*.json`). Conform to these
-   categories rigidly to maintain repository cleanliness.
+- **Ruby Versioning**: **Always target the latest available Ruby version.** Track the exact Ruby version using a
+  `.ruby-version` file to ensure parity between developer machines and CI contexts. Modern toolchains (like `mise` or
+  `rbenv`) naturally ingest this.
+- **Dependency Pinning (Gemspec vs. Gemfile)**:
+  - For reusable generic libraries (gems), do NOT commit `Gemfile.lock` to version control. This ensures CI pipelines
+    resolve the appropriate, environment-compatible dependencies during multi-version matrix tests.
+  - Maintain all dependencies (runtime and development) strictly within the `gemspec`. The `Gemfile` should only
+    contain `gemspec`.
+  - Default to safe version bounds utilizing the pessimistic operator (`~> x.y`) inside the `gemspec`. However, if
+    there is a possibility that the gem works across multiple major versions of a dependency (e.g., standard tooling
+    like `rubocop`, `rspec`, or `rake`), use `>=` to avoid aggressively over-constraining testing dependencies.
+- **Gemspec File Generation**: Never use `git ls-files` or similar shell commands to populate `spec.files`. Rely on
+  native Ruby globbing (e.g., `Dir.glob('{exe,lib,certs,config}/**/*')`) to ensure the gem can be successfully built in
+  environments without a `.git` directory or git executable.
+  - **Configuration Exposure Requirement**: If the gem is a plugin or actively distributes configuration defaults
+    (e.g., RuboCop extensions needing `config/default.yml`), it is critical to explicitly append `config` (or the
+    relative metadata directory) to the `Dir.glob` definition. Failure to do so will compile a valid-looking package
+    that silently omits critical configuration structures, leading to file-not-found exceptions upon production
+    install.
+- **Environment Determinism**: Enforce locale semantics explicitly (e.g., establishing
+  `ENV['LANG'] = ENV.fetch('LANG', 'en_US.UTF-8')` statically in Rakefiles or CI configurations) to avert subtle
+  encoding failures across distributed platforms.
+- **Version Control Ignore Policies (`.gitignore`)**: Safely partition exclusion files utilizing explicitly commented
+  boundary sections: OS / Editor artifacts, Ruby / Bundler extractions (`*.gem`, `vendor/`), Logs and Output, Coverage
+  caches, YARD document generation caches (`.yardoc/`), and general transient formats (e.g. `*.json`). Conform to these
+  categories rigidly to maintain repository cleanliness.
 
-## 9. Gem Metadata Standards
+## Gem metadata standards
 
 Consistent metadata helps standardize open-source publication and internal tracking.
 
-1. **Homepage Template**: Set the `spec.homepage` strictly utilizing the HTTPS standard GitHub web URI format:
-   `https://github.com/VitaliiLazebnyi/<gem name>`.
-2. **Minimize Metadata Link Duplication**: Do NOT duplicate the `spec.homepage` value into
-   `spec.metadata['homepage_uri']`. RubyGems versions emit warnings when there are multiple metadata fields (like
-   `homepage_uri` and `source_code_uri`) assigning the exact same URI, as it will deduplicate them visually on
-   rubygems.org. Standard practice is to provide `spec.homepage` inherently, set
-   `spec.metadata['source_code_uri'] = spec.homepage` to explicitly activate the source code link, and omit
-   `homepage_uri` from the metadata hash.
+- **Homepage Template**: Set the `spec.homepage` strictly utilizing the HTTPS standard GitHub web URI format:
+  `https://github.com/VitaliiLazebnyi/<gem name>`.
+- **Minimize Metadata Link Duplication**: Do NOT duplicate the `spec.homepage` value into
+  `spec.metadata['homepage_uri']`. RubyGems versions emit warnings when there are multiple metadata fields (like
+  `homepage_uri` and `source_code_uri`) assigning the exact same URI, as it will deduplicate them visually on
+  `rubygems.org`. Standard practice is to provide `spec.homepage` inherently, set
+  `spec.metadata['source_code_uri'] = spec.homepage` to explicitly activate the source code link, and omit
+  `homepage_uri` from the metadata hash.

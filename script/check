@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Runs the checks of this repository. Every CI job runs its checks through this script (each job names the checks it
+# runs), so `script/check` with no argument runs exactly what CI runs. A check fails when its command fails, and when
+# its output contains a warning or a deprecation notice (script/warnings.sh).
+#
+# Usage: script/check [check...]   (no argument: every check, in the order below)
+#
+# The Ruby checks need `bundle install`; `mutant` runs on the Ruby that .github/workflows/mutation.yml names (see
+# script/outdated_holds.yml). The other checks run the tools of tools/releases.txt and tools/requirements.txt from the
+# PATH: script/install_tools.sh installs them on Linux x86-64; on other platforms each tool's release or package
+# manager provides the same version. zizmor runs its online audits with GH_TOKEN, or the token of `gh`.
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+all_checks=(
+  suppressions rubocop spec spec_oldest typecheck yard reek flay flog debride audit package mutant outdated
+  markdown yaml editorconfig shellcheck shfmt actionlint zizmor typos gitleaks
+)
+readonly all_checks
+# The shell scripts of the repository (ShellCheck and shfmt).
+shell_files=(script/*.sh script/check .githooks/pre-commit)
+readonly shell_files
+# ShellCheck at its strictest: every optional check, every severity.
+shellcheck_options=(--enable=all --severity=style)
+readonly shellcheck_options
+
+# Every Ruby command runs with every warning category on.
+export RUBYOPT='-w -W:deprecated -W:performance'
+
+rake_task() { bundle exec rake "${1}"; }
+check_suppressions() { script/forbidden_suppressions.sh; }
+check_rubocop() { rake_task rubocop; }
+check_spec() { rake_task spec; }
+check_spec_oldest() { rake_task spec_oldest; }
+check_typecheck() { rake_task typecheck; }
+check_yard() { rake_task yard; }
+check_reek() { rake_task reek; }
+check_flay() { rake_task flay; }
+check_flog() { rake_task flog; }
+check_debride() { rake_task debride; }
+check_audit() { rake_task audit; }
+check_package() { rake_task package; }
+check_mutant() { LANG=C.UTF-8 LC_ALL=C.UTF-8 rake_task mutant; }
+check_outdated() { rake_task outdated; }
+check_markdown() { rumdl check --deny-config-warnings .; }
+check_yaml() { yamllint --strict .; }
+check_editorconfig() { editorconfig-checker; }
+check_shellcheck() { shellcheck "${shellcheck_options[@]}" "${shell_files[@]}"; }
+check_shfmt() { shfmt --diff "${shell_files[@]}"; }
+check_typos() { typos; }
+check_gitleaks() { gitleaks git --redact --verbose --exit-code 1 .; }
+
+# actionlint runs ShellCheck, with the options above, on every `run:` script of the workflows.
+check_actionlint() {
+  SHELLCHECK_OPTS="${shellcheck_options[*]}" actionlint -color
+}
+
+# The workflows, the actions they use and the Dependabot configuration; the online audits (known-vulnerable actions,
+# impostor commits, ...) need a GitHub token.
+check_zizmor() {
+  local token=${GH_TOKEN:-}
+  if [[ -z ${token} ]]; then
+    token=$(gh auth token)
+  fi
+  GH_TOKEN=${token} zizmor --persona=auditor .
+}
+
+if [[ $# -eq 0 ]]; then
+  set -- "${all_checks[@]}"
+fi
+for name in "$@"; do
+  if [[ " ${all_checks[*]} " != *" ${name} "* ]]; then
+    echo "Unknown check '${name}'. Checks: ${all_checks[*]}" >&2
+    exit 2
+  fi
+done
+
+log=$(mktemp)
+trap 'rm -f "${log}"' EXIT
+for name in "$@"; do
+  echo "==> ${name}"
+  "check_${name}" 2>&1 | tee "${log}"
+  if ! hits=$(script/warnings.sh < "${log}"); then
+    printf '==> %s printed warnings:\n%s\n' "${name}" "${hits}" >&2
+    exit 1
+  fi
+done
+echo "==> All checks passed: $*"

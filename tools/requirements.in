@@ -1,0 +1,10 @@
+# The linters of script/check that are published as Python wheels, installed by script/install_tools.sh with
+#   python3 -m pip install --require-hashes --only-binary :all: -r tools/requirements.txt
+# The others are release binaries, pinned by SHA-256 in tools/releases.txt. Regenerate the lock (every package
+# pinned with the hashes of its files) with
+#   uv pip compile --generate-hashes --universal tools/requirements.in -o tools/requirements.txt
+rumdl
+shellcheck-py
+typos
+yamllint
+zizmor

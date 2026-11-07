@@ -1,12 +1,13 @@
+---
 gem:
-  # Reek and the dry-rb gems it depends on are development tools that no checked file refers to. Compiling
-  # their RBIs touches constants that dry-rb has deprecated, which prints deprecation notices.
+  # Reek and the dry-rb gems it depends on are development tools that no checked file refers to. Compiling their
+  # RBIs touches constants that dry-rb has deprecated, which prints deprecation notices.
   exclude:
-  - dry-configurable
-  - dry-core
-  - dry-inflector
-  - dry-initializer
-  - dry-logic
-  - dry-schema
-  - dry-types
-  - reek
+    - dry-configurable
+    - dry-core
+    - dry-inflector
+    - dry-initializer
+    - dry-logic
+    - dry-schema
+    - dry-types
+    - reek

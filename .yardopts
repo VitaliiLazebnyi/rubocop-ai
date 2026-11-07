@@ -1,5 +1,6 @@
---markup markdown
---plugin sorbet
+--markup rdoc
+--markup-provider rdoc
 --title "RuboCop AI Extension"
--q
+--private
+--protected
 lib/

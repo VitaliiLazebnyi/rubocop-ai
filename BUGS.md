@@ -1,20 +1,20 @@
-# Bug Definitions and Anomalies
+# Bug definitions and anomalies
 
 This document logs active or notable defects mapped explicitly to their requirement violations. Do NOT bloat
 standard specifications or changelogs with this content. Remediation requires writing a failing deterministic test
 beforehand; the regression spec of each defect carries its identifier as `bug:` metadata.
 
-## Active Defects
+## Active defects
 
 None.
 
-## Resolved Defects
+## Resolved defects
 
 - **BUG-RB-005**: The gem metadata (`changelog_uri`) linked `CHANGELOG.md`, which did not exist (the link was a 404 on
-  rubygems.org), and the gem did not ship it.
+  `rubygems.org`), and the gem did not ship it.
   - **Violation**: Gem metadata standards (every metadata URI resolves).
   - **Resolution**: `CHANGELOG.md` is added and listed in `spec.files`. Regression spec: `spec/rubocop/ai_spec.rb`
-    ("links a changelog that exists in the repository and ships with the gem").
+    ("links a changelog that exists in the repository", "ships the changelog it links").
 
 - **BUG-RB-004**: `AI/AdverbSpam` counted every word ending in "ly" as an adverb, so ordinary comments such as
   `# Only apply this when needed`, `# Reply quickly` or `# The family assembly` were reported, and autocorrection
@@ -43,9 +43,9 @@ None.
 
 - **BUG-CI-003**: Sorbet reported `Call to method X on T.untyped` for RuboCop dependencies under `--typed strong`.
   - **Violation**: The strictest type checking requirement (RC-AI-REQ-004).
-  - **Resolution**: Tapioca generates the RBIs of every gem (`rake typecheck`), and
-    `sorbet/rbi/shims/rubocop.rbi` types the RuboCop, rubocop-ast and parser methods that `lib/` calls, so every file
-    of `lib/` is `# typed: strong` without any `T.cast`, `T.unsafe` or `T.untyped`.
+  - **Resolution**: Tapioca generates the RBIs of every gem (`rake typecheck`), and `sorbet/rbi/shims/rubocop.rbi`
+    types the RuboCop, `rubocop-ast` and `parser` methods that `lib/` calls, so every file of `lib/` is
+    `# typed: strong` without any `T.cast`, `T.unsafe` or `T.untyped`.
 
 - **BUG-CI-002**: The Sorbet CI step failed with `Argument '--dir .' starts with a - but has incorrect syntax.`
   - **Violation**: The requirement to statically type check the repository with Sorbet (`srb tc`).
