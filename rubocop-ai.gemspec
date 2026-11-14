@@ -64,7 +64,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rake', '~> 13.4')
   # Linter plugins (RuboCop itself is a runtime dependency).
   # HOLD (script/outdated_holds.yml): rubocop-md 3.0 loads kramdown 2.5.2, which prints a Ruby warning.
-  spec.add_development_dependency('rubocop-md', '~> 2.0')
+  spec.add_development_dependency('rubocop-md', '~> 3.0')
   spec.add_development_dependency('rubocop-packaging', '~> 0.6')
   spec.add_development_dependency('rubocop-performance', '~> 1.27')
   spec.add_development_dependency('rubocop-rake', '~> 0.7')
